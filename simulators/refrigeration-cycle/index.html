@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Refrigeration Cycle Trainer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 22</span>
+    <h1>Refrigeration Cycle Trainer</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Running</span>
+    <span class="pill ok" id="pillState">—</span>
+    <span class="pill" id="pillMode">—</span>
+    <span class="pill warn hidden" id="pillSlug">Liquid slugging — no superheat</span>
+    <span class="pill warn hidden" id="pillHot">Discharge above 120 °C</span>
+    <span class="pill amber hidden" id="pillFlash">High flash gas</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Refrigeration circuit">
+    <div class="rig-head">
+      <h2 id="rigTitle">Vapour-compression circuit · R134a · evaporator, compressor, condenser, expansion valve</h2>
+      <span class="legend"><i class="sw taps"></i>high pressure <i class="sw water"></i>low pressure <i class="sw brass"></i>flow <i class="sw ink"></i>state points</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="readouts">
+      <div class="ro"><span class="k">Cooling capacity</span><span class="v" id="roQe">—</span><span class="u">kW · heat rejected <span id="roQc">—</span> kW</span></div>
+      <div class="ro"><span class="k">Compressor power</span><span class="v" id="roW">—</span><span class="u">kW · mass flow <span id="roM">—</span> g/s</span></div>
+      <div class="ro" id="roCOPBox"><span class="k">COP</span><span class="v" id="roCOP">—</span><span class="u">cooling per kW · Carnot <span id="roCOPc">—</span></span></div>
+      <div class="ro"><span class="k">Evaporating</span><span class="v" id="roTe">—</span><span class="u">°C · <span id="roPe">—</span> kPa</span></div>
+      <div class="ro"><span class="k">Condensing</span><span class="v" id="roTc">—</span><span class="u">°C · <span id="roPc">—</span> kPa · ratio <span id="roRp">—</span></span></div>
+      <div class="ro" id="roT2Box"><span class="k">Discharge temperature</span><span class="v" id="roT2">—</span><span class="u">°C · limit 120</span></div>
+      <div class="ro" id="roSHBox"><span class="k">Superheat / subcooling</span><span class="v" id="roSH">—</span><span class="u">K at suction · liquid subcooled <span id="roSC">—</span> K</span></div>
+      <div class="ro" id="roX4Box"><span class="k">Flash gas after the valve</span><span class="v" id="roX4">—</span><span class="u">% vapour by mass entering the evaporator</span></div>
+      <div class="ro"><span class="k">Volumetric efficiency</span><span class="v" id="roEtav">—</span><span class="u">of the swept volume</span></div>
+      <div class="ro"><span class="k">Cold room</span><span class="v" id="roRoom">—</span><span class="u" id="roRoomNote">explorer mode</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="types" id="types"><button class="on" data-type="explorer">Cycle explorer</button><button data-type="coldroom">Cold room on a clock</button></div>
+      <div class="grp-title">Cycle</div>
+      <div class="ctl" data-m="explorer"><label for="Te">Evaporating temperature <output id="TeOut">-10 °C</output></label><input type="range" id="Te" min="-35" max="15" value="-10" step="1"></div>
+      <div class="ctl" data-m="explorer"><label for="Tc">Condensing temperature <output id="TcOut">40 °C</output></label><input type="range" id="Tc" min="25" max="65" value="40" step="1"></div>
+      <div class="ctl"><label for="SH">Suction superheat <output id="SHOut">5 K</output></label><input type="range" id="SH" min="0" max="20" value="5" step="1"></div>
+      <div class="ctl"><label for="SC">Liquid subcooling <output id="SCOut">3 K</output></label><input type="range" id="SC" min="0" max="15" value="3" step="1"></div>
+      <div class="ctl"><label for="eta">Compressor isentropic efficiency <output id="etaOut">0.70</output></label><input type="range" id="eta" min="0.5" max="0.9" value="0.7" step="0.01"></div>
+      <div class="ctl"><label for="Vd">Swept volume <output id="VdOut">20 m³/h</output></label><input type="range" id="Vd" min="2" max="80" value="20" step="1"></div>
+      <div class="ctl"><label for="clr">Clearance volume <output id="clrOut">4 %</output></label><input type="range" id="clr" min="2" max="10" value="4" step="0.5"></div>
+      <div class="ctl"><label for="charge">Refrigerant charge <output id="chargeOut">100 %</output></label><input type="range" id="charge" min="50" max="100" value="100" step="5"></div>
+      <div class="grp-title" data-m="coldroom">Cold room</div>
+      <div class="ctl" data-m="coldroom"><label for="Tamb">Ambient at the condenser <output id="TambOut">30 °C</output></label><input type="range" id="Tamb" min="15" max="45" value="30" step="1"></div>
+      <div class="ctl" data-m="coldroom"><label for="SPr">Room thermostat setting <output id="SPrOut">-18 °C</output></label><input type="range" id="SPr" min="-25" max="10" value="-18" step="1"></div>
+      <div class="ctl" data-m="coldroom"><label for="load">Product / door load <output id="loadOut">3.0 kW</output></label><input type="range" id="load" min="0" max="20" value="3" step="0.5"></div>
+      <div class="ctl" data-m="coldroom"><label for="UA">Room heat leak UA <output id="UAOut">0.25 kW/K</output></label><input type="range" id="UA" min="0.05" max="1" value="0.25" step="0.05"></div>
+      <div class="ctl" data-m="coldroom"><label for="Cth">Room thermal mass <output id="CthOut">800 kJ/K</output></label><input type="range" id="Cth" min="200" max="10000" value="800" step="500"></div>
+      <div class="ctl" data-m="coldroom"><label for="foul">Condenser fouling (extra approach) <output id="foulOut">+0 K</output></label><input type="range" id="foul" min="0" max="15" value="0" step="1"></div>
+      <div class="ctl" data-m="coldroom"><label for="dTe">Evaporator approach <output id="dTeOut">8 K</output></label><input type="range" id="dTe" min="4" max="15" value="8" step="1"></div>
+      <div class="ctl" data-m="coldroom"><label for="dTc">Condenser approach <output id="dTcOut">12 K</output></label><input type="range" id="dTc" min="5" max="20" value="12" step="1"></div>
+      <div class="ctl" data-m="coldroom"><label for="tscale">Clock <output id="tscaleOut">×30</output></label><input type="range" id="tscale" min="1" max="100" value="30" step="1"></div>
+      <div class="ctl-actions">
+        <button class="act" id="btnRun">Running</button>
+        <button class="act ghost" id="btnStop">Pause</button>
+        <button class="act ghost" id="btnWarm">Warm room to ambient</button>
+        <button class="act ghost" id="btnRecord">Record reading</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="base">−10 / 40 °C, 5 K superheat</button>
+          <button class="mini" data-preset="hot">Condensing 55 °C</button>
+          <button class="mini" data-preset="deep">Evaporating −30 °C</button>
+          <button class="mini" data-preset="slug">No superheat</button>
+          <button class="mini" data-preset="overheat">Pressure ratio too high</button>
+          <button class="mini" data-preset="lowcharge">Low charge 60 %</button>
+          <button class="mini" data-preset="room">Cold room pull-down</button>
+          <button class="mini" data-preset="roomhot">Hot day, fouled condenser</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2>p-h diagram · R134a with the cycle</h2><span class="legend"><i class="sw steel"></i>dome and isotherms <i class="sw taps"></i>cycle <i class="sw deep"></i>isentropic <i class="sw brass"></i>state points</span></div>
+      <canvas id="chart" width="900" height="300" aria-label="Pressure-enthalpy diagram"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Capacity and COP against evaporating temperature</h2><span class="legend"><i class="sw water"></i>capacity <i class="sw brass"></i>COP <i class="sw taps"></i>this cycle</span></div>
+      <canvas id="chart2" width="900" height="250" aria-label="Capacity and COP sweep"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2 id="traceTitle">Cold room · temperature, capacity and power against time</h2></div>
+      <canvas id="trace" width="900" height="180" aria-label="Cold room traces"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Each reading stores the temperatures, superheat, subcooling, efficiencies, charge, fouling, pressure ratio, mass flow, capacity, power, COP, discharge temperature and flash gas.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="refrigeration.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Tag</th><th>Mode</th><th>Te °C</th><th>Tc °C</th><th>SH K</th><th>SC K</th><th>η is</th><th>Charge %</th><th>Foul K</th><th>rp</th><th>η vol</th><th>g/s</th><th>Qe kW</th><th>W kW</th><th>COP</th><th>Carnot</th><th>T2 °C</th><th>x4</th><th>Room °C</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>The cycle</h3><p class="eq">q<sub>e</sub> = h₁ − h₄ &nbsp;·&nbsp; w = h₂ − h₁ &nbsp;·&nbsp; COP = q<sub>e</sub> / w &nbsp;·&nbsp; h₄ = h₃ (throttling)</p><p>Liquid refrigerant flashes through the expansion valve to the evaporating pressure, boils in the evaporator taking heat from the cold space, is compressed to the condensing pressure and gives that heat plus the compressor work to the ambient in the condenser. On the p-h diagram the cycle is a quadrilateral whose width at the bottom is the cooling effect and whose slanted side is the compressor work.</p></article>
+      <article><h3>Temperatures set everything</h3><p class="eq">COP<sub>Carnot</sub> = T<sub>e</sub> / (T<sub>c</sub> − T<sub>e</sub>)</p><p>A higher condensing temperature (hot day, fouled condenser, undersized condenser) raises the discharge pressure: more work per kg, less cooling per kg, hotter discharge. A lower evaporating temperature thins the suction gas, so the same swept volume moves far less mass: capacity collapses at deep-freeze temperatures. Every kelvin of lift costs 2–3 % of COP.</p></article>
+      <article><h3>Superheat and subcooling</h3><p>Superheat at the suction guarantees dry gas at the compressor; without it liquid enters and hammers the valves. Subcooling of the liquid before the valve reduces the flash gas and adds cooling capacity for free. A thermostatic expansion valve holds the superheat; low charge shows as high superheat and low capacity.</p></article>
+      <article><h3>Compressor</h3><p class="eq">η<sub>v</sub> = 1 − c (r<sub>p</sub>^{1/n} − 1) &nbsp;·&nbsp; ṁ = η<sub>v</sub> V<sub>d</sub> / v₁</p><p>Gas trapped in the clearance volume re-expands before suction can begin, so the volumetric efficiency falls as the pressure ratio rises. Discharge temperature climbs with pressure ratio and poor isentropic efficiency; above about 120 °C the oil breaks down.</p></article>
+      <article><h3>About the numbers</h3><p>[Illustrative data, for training only.] R134a saturation properties from a table with an effective vapour heat capacity per pressure and a simple gas law for the suction volume; the cold room is a lumped thermal mass with a fixed evaporator and condenser approach and a 2 K thermostat differential. Real plant uses full property data, evaporator and condenser heat-transfer models and part-load compressor maps.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the trainer</h2>
+    <ul>
+      <li><b>Cycle explorer</b>: set evaporating and condensing temperatures, superheat, subcooling and compressor data. The circuit, the p-h diagram and the readouts update at once.</li>
+      <li><b>Cold room</b>: the room starts at ambient; the compressor pulls it down while the evaporating temperature follows the room and the condensing temperature follows the ambient. The thermostat cycles the compressor. The clock compresses hours into minutes.</li>
+      <li><b>Sweep chart</b>: capacity and COP of this compressor against evaporating temperature at two condensing temperatures, with the present cycle marked.</li>
+      <li><b>Record</b> readings to compare cycles in the tasks.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>Space</kbd> run / pause · <kbd>R</kbd> record · <kbd>1</kbd> explorer · <kbd>2</kbd> cold room · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

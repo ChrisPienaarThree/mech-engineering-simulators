@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Heat Exchanger Trainer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 14</span>
+    <h1>Heat Exchanger Trainer</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Stopped</span>
+    <span class="pill ok" id="pillDuty">duty —</span>
+    <span class="pill" id="pillEff">ε —</span>
+    <span class="pill amber hidden" id="pillFoul">Fouled — duty down</span>
+    <span class="pill warn hidden" id="pillBoil">Cold side boiling</span>
+    <span class="pill warn hidden" id="pillCross">Temperature cross impossible here</span>
+    <span class="pill amber hidden" id="pillDp">High pressure drop</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Heat exchanger with hot and cold streams, thermometers and fouling">
+    <div class="rig-head">
+      <h2 id="rigTitle">Counterflow · hot stream in the tubes, cold in the shell</h2>
+      <span class="legend"><i class="sw taps"></i>hot stream <i class="sw water"></i>cold stream <i class="sw" style="background:#7a5a2a"></i>fouling layer</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="readouts">
+      <div class="ro"><span class="k">Duty Q</span><span class="v" id="roQ">—</span><span class="u">kW · max possible <span id="roQmax">—</span> kW</span></div>
+      <div class="ro"><span class="k">Effectiveness ε</span><span class="v" id="roEps">—</span><span class="u">NTU <span id="roNTU">—</span> · C<sub>r</sub> <span id="roCr">—</span></span></div>
+      <div class="ro"><span class="k">Hot out</span><span class="v" id="roTho">—</span><span class="u">°C · in <span id="roThi">—</span> · ΔT <span id="roDTh">—</span> K</span></div>
+      <div class="ro" id="roTcoBox"><span class="k">Cold out</span><span class="v" id="roTco">—</span><span class="u">°C · in <span id="roTci">—</span> · ΔT <span id="roDTc">—</span> K</span></div>
+      <div class="ro"><span class="k">LMTD</span><span class="v" id="roLMTD">—</span><span class="u">K · F <span id="roF">—</span> · approach <span id="roApp">—</span> K</span></div>
+      <div class="ro" id="roUBox"><span class="k">Overall U</span><span class="v" id="roU">—</span><span class="u">W/m²K · clean <span id="roUc">—</span> · UA <span id="roUA">—</span> kW/K</span></div>
+      <div class="ro" id="roRfBox"><span class="k">Fouling</span><span class="v" id="roRf">—</span><span class="u">m²K/kW · <span id="roFoulPct">—</span> % duty lost</span></div>
+      <div class="ro"><span class="k">Capacity rates</span><span class="v" id="roCh">—</span><span class="u">kW/K hot · cold <span id="roCc">—</span> · C<sub>min</sub> is the <span id="roCmin">—</span></span></div>
+      <div class="ro" id="roDpBox"><span class="k">Pressure drop</span><span class="v" id="roDph">—</span><span class="u">kPa hot · cold <span id="roDpc">—</span> · pumping <span id="roPp">—</span> W</span></div>
+      <div class="ro"><span class="k">Area</span><span class="v" id="roA">—</span><span class="u">m² · <span id="roN">—</span> tubes / plates</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="types" id="types"><button class="on" data-type="counter">Counterflow</button><button data-type="parallel">Parallel flow</button><button data-type="shell12">Shell-and-tube 1-2</button><button data-type="cross">Cross-flow (both unmixed)</button><button data-type="plate">Plate (counterflow)</button></div>
+      <div class="grp-title">Hot stream</div>
+      <div class="ctl"><label>Fluid <select id="fh"><option value="water">Water</option><option value="oil" selected>Lube oil</option><option value="glycol">50 % glycol</option></select></label></div>
+      <div class="ctl"><label for="mh">Mass flow <output id="mhOut">2.0 kg/s</output></label><input type="range" id="mh" min="0.1" max="8" value="2" step="0.1"></div>
+      <div class="ctl"><label for="Thi">Inlet temperature <output id="ThiOut">90 °C</output></label><input type="range" id="Thi" min="40" max="180" value="90" step="1"></div>
+      <div class="grp-title">Cold stream</div>
+      <div class="ctl"><label>Fluid <select id="fc"><option value="water" selected>Water</option><option value="oil">Lube oil</option><option value="glycol">50 % glycol</option></select></label></div>
+      <div class="ctl"><label for="mc">Mass flow <output id="mcOut">3.0 kg/s</output></label><input type="range" id="mc" min="0.1" max="8" value="3" step="0.1"></div>
+      <div class="ctl"><label for="Tci">Inlet temperature <output id="TciOut">25 °C</output></label><input type="range" id="Tci" min="0" max="80" value="25" step="1"></div>
+      <div class="grp-title">Exchanger</div>
+      <div class="ctl"><label for="A">Heat-transfer area <output id="AOut">12 m²</output></label><input type="range" id="A" min="1" max="60" value="12" step="0.5"></div>
+      <div class="ctl"><label for="Uc">Clean U at design flows <output id="UcOut">600 W/m²K</output></label><input type="range" id="Uc" min="100" max="4000" value="600" step="25"></div>
+      <div class="ctl"><label for="foulRate">Fouling rate <output id="foulRateOut">normal</output></label><input type="range" id="foulRate" min="0" max="3" value="1" step="0.5"></div>
+      <div class="ctl"><label for="bypass">Hot-side bypass (control valve) <output id="bypassOut">0 %</output></label><input type="range" id="bypass" min="0" max="90" value="0" step="5"></div>
+      <div class="ctl"><label for="tscale">Fouling clock <output id="tscaleOut">1 day / s</output></label><input type="range" id="tscale" min="0" max="10" value="1" step="0.5"></div>
+      <div class="ctl-actions">
+        <button class="act" id="btnRun">Start</button>
+        <button class="act ghost" id="btnStop">Stop</button>
+        <button class="act ghost" id="btnClean">Clean the exchanger</button>
+        <button class="act ghost" id="btnRecord">Record reading</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="counter">Oil cooler, counterflow</button>
+          <button class="mini" data-preset="parallel">Same cooler, parallel flow</button>
+          <button class="mini" data-preset="balanced">Balanced flows (Cr = 1)</button>
+          <button class="mini" data-preset="pinch">Cold flow starved</button>
+          <button class="mini" data-preset="foul">Fouling over 60 days</button>
+          <button class="mini" data-preset="plate">Plate exchanger, small</button>
+          <button class="mini" data-preset="shell">Shell-and-tube 1-2</button>
+          <button class="mini" data-preset="boil">Push the cold side to boiling</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2>Temperature profile along the exchanger</h2><span class="legend"><i class="sw taps"></i>hot <i class="sw water"></i>cold <span class="pill" style="padding:.1em .5em">approach and pinch marked</span></span></div>
+      <canvas id="profile" width="900" height="300" aria-label="Temperature of both streams against position"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Effectiveness against NTU · every arrangement at the present C<sub>r</sub></h2><span class="legend"><i class="sw taps"></i>this exchanger</span></div>
+      <canvas id="entu" width="900" height="280" aria-label="Effectiveness-NTU curves with the operating point"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Traces · duty, outlet temperatures and fouling over time</h2></div>
+      <canvas id="trace" width="900" height="200" aria-label="Duty and fouling traces"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Each reading stores the arrangement, both streams, area, U, fouling, duty, effectiveness, NTU, LMTD and outlet temperatures.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="heat-exchanger.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Tag</th><th>Type</th><th>Hot</th><th>ṁh</th><th>Thi</th><th>Tho</th><th>Cold</th><th>ṁc</th><th>Tci</th><th>Tco</th><th>A m²</th><th>U</th><th>Rf</th><th>Q kW</th><th>ε</th><th>NTU</th><th>Cr</th><th>LMTD</th><th>F</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>Two ways to the same answer</h3><p class="eq">Q = U A F ΔT<sub>lm</sub> &nbsp;·&nbsp; Q = ε C<sub>min</sub> (T<sub>h,in</sub> − T<sub>c,in</sub>) &nbsp;·&nbsp; NTU = UA / C<sub>min</sub></p><p>The LMTD method suits a design check when all four temperatures are known. The effectiveness-NTU method suits a rating problem: given the exchanger and the inlets, what comes out? The bench solves with ε-NTU and reports the LMTD and correction factor F it implies.</p></article>
+      <article><h3>Counterflow against parallel flow</h3><p>In counterflow the cold outlet can climb above the hot outlet: a temperature cross. In parallel flow both streams approach the same mixed temperature and the cold outlet can never exceed the hot outlet, so effectiveness is capped at 1/(1 + C<sub>r</sub>). Same area, same flows, less duty.</p></article>
+      <article><h3>Capacity rates</h3><p class="eq">C = ṁ c<sub>p</sub> &nbsp;·&nbsp; C<sub>r</sub> = C<sub>min</sub>/C<sub>max</sub></p><p>The stream with the smaller capacity rate changes temperature the most and sets the maximum possible duty. Balanced flows (C<sub>r</sub> = 1) give parallel temperature lines and the lowest effectiveness for a given NTU; a very unbalanced exchanger (C<sub>r</sub> → 0, as with condensing steam) reaches ε = 1 − e<sup>−NTU</sup> whatever the arrangement.</p></article>
+      <article><h3>Fouling</h3><p class="eq">1/U = 1/U<sub>clean</sub> + R<sub>f</sub></p><p>Deposits add a resistance in series. It grows with time and with hot-side temperature, and its effect is largest on exchangers with a high clean U: a plate exchanger loses proportionally more to the same deposit than an oil cooler. Cleaning resets it; the traces show the duty recovering.</p></article>
+      <article><h3>Flow and U</h3><p>Film coefficients rise with velocity (about the 0.8 power in turbulent flow), so more flow raises U as well as the capacity rate, but pressure drop rises with the square of flow and pumping power with the cube. The bypass valve trades duty for a stable hot outlet.</p></article>
+      <article><h3>About the numbers</h3><p>[Illustrative data, for training only.] Constant properties per fluid, film coefficients scaled from the clean U at design flows, standard ε-NTU relations (counterflow, parallel, 1-2 shell-and-tube, cross-flow both unmixed), fouling growing with time on a compressed clock. No phase change, no property variation with temperature.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the trainer</h2>
+    <ul>
+      <li><b>Pick an arrangement</b>, set both streams (fluid, flow, inlet temperature), the area and the clean U, then Start. Read the duty, effectiveness, NTU, outlet temperatures, LMTD and pressure drops.</li>
+      <li><b>Profiles</b> show the two streams along the exchanger with the approach and pinch marked; the ε-NTU chart shows every arrangement at the present capacity ratio with your point on it.</li>
+      <li><b>Fouling</b> builds on the fouling clock and the duty falls; clean the exchanger to recover it. The bypass valve lets you control the hot outlet.</li>
+      <li><b>Record</b> readings to compare arrangements, flows and sizes in the tasks.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>Space</kbd> start / stop · <kbd>C</kbd> clean · <kbd>R</kbd> record · <kbd>1</kbd>–<kbd>5</kbd> arrangement · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

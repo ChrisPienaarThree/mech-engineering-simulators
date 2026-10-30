@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gas Pipeline Route and Wall Thickness Designer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 28</span>
+    <h1>Gas Pipeline Route and Wall Thickness Designer</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillState">Design stage</span>
+    <span class="pill" id="pillClass">—</span>
+    <span class="pill warn hidden" id="pillOver">MAOP NOT COMMENSURATE WITH LOCATION CLASS</span>
+    <span class="pill amber hidden" id="pillHCA">High consequence area</span>
+    <span class="pill amber hidden" id="pillFrac">Fracture control required</span>
+    <span class="pill warn hidden" id="pillTemp">Above 232 °C: outside Table 841.116A</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Pipeline route plan">
+    <div class="rig-head">
+      <h2 id="rigTitle">Route plan · corridor ±700 m · move over the map to slide the 1-mile class-location unit, click to place the selected item</h2>
+      <span class="legend"><i class="sw good"></i>Class 1 <i class="sw brass"></i>Class 2 <i class="sw taps"></i>Class 3 / 4 <i class="sw water"></i>pipe (width ∝ wall) <i class="sw steel"></i>PIR corridor</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="readouts">
+      <div class="ro" id="roUnitBox"><span class="k">Class-location unit at pointer</span><span class="v small" id="roUnit">—</span><span class="u" id="roUnitNote">1 mile long, ¼ mile wide (para. 840.21)</span></div>
+      <div class="ro"><span class="k">Route by location class</span><span class="v small" id="roClass">—</span><span class="u" id="roClassNote">—</span></div>
+      <div class="ro"><span class="k">Wall thicknesses used</span><span class="v small" id="roWall">—</span><span class="u" id="roWallNote">—</span></div>
+      <div class="ro"><span class="k">Line pipe steel</span><span class="v" id="roSteel">—</span><span class="u" id="roSteelNote">—</span></div>
+      <div class="ro"><span class="k">Hoop stress at MAOP</span><span class="v" id="roHoop">—</span><span class="u" id="roHoopNote">—</span></div>
+      <div class="ro"><span class="k">Test pressure (Table 841.322(f))</span><span class="v small" id="roTest">—</span><span class="u" id="roTestNote">—</span></div>
+      <div class="ro"><span class="k">Potential impact radius</span><span class="v" id="roPIR">—</span><span class="u" id="roPIRNote">—</span></div>
+      <div class="ro" id="roBuiltBox"><span class="k">As-built status</span><span class="v small" id="roBuilt">Design stage</span><span class="u" id="roBuiltNote">Press Build pipeline to freeze the walls and test pressure</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="grp-title">Pipe and service</div>
+      <div class="ctl"><label>Outside diameter <select id="OD">
+        <option value="168.3">DN 150 · 168.3 mm</option><option value="219.1">DN 200 · 219.1 mm</option><option value="273.1">DN 250 · 273.1 mm</option><option value="323.9">DN 300 · 323.9 mm</option><option value="406.4" selected>DN 400 · 406.4 mm</option><option value="508">DN 500 · 508.0 mm</option><option value="610">DN 600 · 610.0 mm</option><option value="762">DN 750 · 762.0 mm</option><option value="914">DN 900 · 914.0 mm</option></select></label></div>
+      <div class="ctl"><label>Line pipe grade (API 5L, SMYS) <select id="grade">
+        <option value="245">Gr B (L245) · 245 MPa</option><option value="290">X42 (L290) · 290 MPa</option><option value="317">X46 (L320) · 317 MPa</option><option value="359" selected>X52 (L360) · 359 MPa</option><option value="386">X56 (L390) · 386 MPa</option><option value="414">X60 (L415) · 414 MPa</option><option value="448">X65 (L450) · 448 MPa</option><option value="483">X70 (L485) · 483 MPa</option><option value="552">X80 (L555) · 552 MPa</option></select></label></div>
+      <div class="ctl"><label for="MAOP">MAOP <output id="MAOPOut">70 bar</output></label><input type="range" id="MAOP" min="10" max="150" value="70" step="1"></div>
+      <div class="ctl"><label for="Tdes">Design temperature <output id="TdesOut">40 °C</output></label><input type="range" id="Tdes" min="0" max="250" value="40" step="1"></div>
+      <div class="ctl"><label>Longitudinal seam (Table 841.115A) <select id="seam"><option value="1" selected>Seamless, ERW, EFW or SAW · E 1.00</option><option value="0.6">Furnace butt welded · E 0.60</option></select></label></div>
+      <div class="ctl"><label>Class 1 design factor <select id="div"><option value="2" selected>Division 2 · F 0.72 · test 1.1 × MAOP</option><option value="1">Division 1 · F 0.80 · test 1.25 × MAOP</option></select></label></div>
+      <div class="ctl"><label for="CA">Corrosion allowance <output id="CAOut">0.0 mm</output></label><input type="range" id="CA" min="0" max="3" value="0" step="0.5"></div>
+      <div class="ctl"><label for="dt">Handling limit D/t (company rule) <output id="dtOut">≤ 100</output></label><input type="range" id="dt" min="50" max="150" value="100" step="5"></div>
+      <div class="ctl"><label>Class boundaries <select id="cluster"><option value="1" selected>Cluster rule: end 660 ft (201 m) past the last building</option><option value="0">Whole 1-mile unit</option></select></label></div>
+
+      <div class="grp-title">Place on the route</div>
+      <div class="toolbar" id="toolbar"><span>Tool</span>
+        <button class="mini on" data-tool="inspect">Inspect unit</button>
+        <button class="mini" data-tool="house">House</button>
+        <button class="mini" data-tool="estate">10-house estate</button>
+        <button class="mini" data-tool="multi">Multistorey block</button>
+        <button class="mini" data-tool="school">School (20+ people)</button>
+        <button class="mini" data-tool="road">Road crossing</button>
+        <button class="mini" data-tool="station">Metering station</button>
+        <button class="mini" data-tool="erase">Erase</button>
+      </div>
+
+      <div class="grp-title">Build and operate</div>
+      <div class="ctl-actions">
+        <button class="act" id="btnBuild">Build pipeline</button>
+        <button class="act ghost" id="btnYears">+5 years development</button>
+        <button class="act ghost" id="btnDerate">Reduce MAOP to comply</button>
+        <button class="act ghost" id="btnReplace">Replace non-compliant pipe</button>
+        <button class="act ghost" id="btnUnbuild">Back to design</button>
+        <button class="act ghost" id="btnRecord">Record reading</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="base">12 km: farms, village, town</button>
+          <button class="mini" data-preset="rural">All rural, Class 1</button>
+          <button class="mini" data-preset="div1">Same route, Class 1 Division 1</button>
+          <button class="mini" data-preset="city">City edge with multistorey blocks</button>
+          <button class="mini" data-preset="encroach">Built, then 15 years of growth</button>
+          <button class="mini" data-preset="school">New school beside a Class 1 line</button>
+          <button class="mini" data-preset="big">DN 900 X70 at 100 bar</button>
+          <button class="mini" data-preset="small">DN 150 at 20 bar</button>
+          <button class="mini" data-preset="hot">Compressor discharge at 180 °C</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2>Design pressure against wall thickness · one line per design factor</h2><span class="legend"><i class="sw good"></i>F 0.80 / 0.72 <i class="sw brass"></i>0.60 <i class="sw taps"></i>0.50 / 0.40 <i class="sw water"></i>MAOP and walls used</span></div>
+      <canvas id="chart" width="900" height="270" aria-label="Design pressure against wall thickness"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Hoop stress along the route · % SMYS at MAOP against the limit</h2><span class="legend"><i class="sw water"></i>hoop stress <i class="sw taps"></i>allowed (F·E·T, or Table 854.1(c) once built)</span></div>
+      <canvas id="schart" width="900" height="230" aria-label="Hoop stress along the route"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Steel for this route against line pipe grade</h2><span class="legend"><i class="sw water"></i>pressure governs <i class="sw steel"></i>handling D/t governs somewhere <i class="sw brass"></i>selected grade</span></div>
+      <canvas id="trace" width="900" height="200" aria-label="Steel against grade"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Each reading stores the pipe, grade, MAOP, temperature, seam factor, the length in each location class, the walls used, steel mass, peak hoop stress, PIR, HCA length and the as-built status.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="gas-pipeline-route.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Tag</th><th>OD</th><th>Grade</th><th>MAOP</th><th>T °C</th><th>E</th><th>Div</th><th>C1 km</th><th>C2 km</th><th>C3 km</th><th>C4 km</th><th>Walls mm</th><th>Steel t</th><th>Max %SMYS</th><th>Gov</th><th>PIR m</th><th>HCA km</th><th>Built</th><th>Non-compliant km</th><th>Replaced km</th><th>Buildings</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>Steel pipe design formula (841.11)</h3><p class="eq">P = 2 S t F E T / D &nbsp;·&nbsp; t = P D / (2 S F E T)</p><p>S is the specified minimum yield strength, never the higher actual value (841.112(c)). The design factor F already allows for the mill under-thickness tolerance, so t is the nominal wall. The formula wall is for pressure only: handling, transport, test water and soil loads may need more (841.113(a)), which is why companies set a minimum wall or a maximum D/t. The model then rounds up to the next standard wall.</p></article>
+      <article><h3>Location class (840.21, 840.22)</h3><p class="eq">zone ¼ mile wide × 1 mile long, slid along the route to catch the most buildings</p><p>Count every building intended for human occupancy in the zone; each dwelling unit in a block of flats counts separately. 10 or fewer: Class 1. 11 to 45: Class 2. 46 or more: Class 3. Multistorey buildings (four or more floors) prevalent: Class 4. A Class 2 or 3 cluster may end 660 ft from the nearest building (840.21(b)). Plan for likely future development (840.42).</p></article>
+      <article><h3>Design factors (Tables 841.114A and B)</h3><p class="eq">Class 1 Div 1 0.80 · Div 2 0.72 · Class 2 0.60 · Class 3 0.50 · Class 4 0.40</p><p>Exceptions lower F locally: uncased crossings of hard-surface roads and railways 0.60 in Class 1 and 0.50 in Class 2; metering and pressure-control facilities and fabricated assemblies 0.60; compressor station piping 0.50; pipelines near concentrations of 20 or more people (schools, churches, hospitals, organised recreation) in Class 1 or 2 must meet Class 3, F 0.50 (840.3, Table 841.114B).</p></article>
+      <article><h3>Joint and temperature factors (Tables 841.115A, 841.116A)</h3><p class="eq">E = 1.00 seamless, ERW, EFW, SAW · 0.60 furnace butt weld &nbsp;·&nbsp; T = 1.000 to 121 °C, 0.967 at 149, 0.933 at 177, 0.900 at 204, 0.867 at 232 °C</p><p>Interpolate between temperatures. Above 232 °C the table stops, and the model flags the design as outside it.</p></article>
+      <article><h3>Test pressure (Table 841.322(f))</h3><p class="eq">water: Class 1 Div 1 1.25 · Div 2 1.1 · Class 2 1.25 · Class 3 and 4 1.40 × MAOP</p><p>The MAOP is the lesser of the design pressure and the test pressure divided by the factor. The test pressure is recorded when you press Build: it matters again when buildings appear later.</p></article>
+      <article><h3>When the location class changes (854, Table 854.1(c))</h3><p class="eq">existing Class 1 line: 11–25 buildings keep MAOP ≤ 72 % SMYS (Div 2) · 26–45 → 0.800 × test pressure ≤ 72 % · 46–65 → 0.667 × TP ≤ 60 % · 66+ → 0.667 × TP ≤ 60 % · multistorey → 0.555 × TP ≤ 50 %</p><p>An existing line does not have to be redesigned for every new house. Table 854.1(c) gives a tolerance band, then caps the MAOP by the original test pressure and a hoop-stress limit. If that cap is below the operating MAOP, the operator lowers the MAOP (with relief or limiting devices, 854.3) or replaces the pipe with pipe designed to Table 841.114A for the new class (854.2(d)). A new school or similar facility near a Class 1 or 2 line limits the hoop stress to 50 % SMYS unless the line is retested and managed as in 855.1(b).</p></article>
+      <article><h3>Fracture control (841.11(c))</h3><p>A fracture toughness criterion or crack arrestors are required above 40 % SMYS for NPS 16 (DN 400) and larger, and above 72 % SMYS for smaller pipe.</p></article>
+      <article><h3>Potential impact radius (ASME B31.8S)</h3><p class="eq">r = 0.69 · d · √p &nbsp;(r ft, d in, p psig) &nbsp;·&nbsp; in SI: r [m] ≈ 0.0315 · D [mm] · √P [bar]</p><p>The radius within which a rupture fire could cause death or injury. B31.8S uses it to find high consequence areas: Class 3 and 4 locations, or circles that hold an identified site or many buildings. [Not in B31.8 itself: check the PIR and HCA criteria against your copy of B31.8S.]</p></article>
+      <article><h3>Which rules apply here?</h3><p><b>South Africa:</b> a NERSA licence under the Gas Act 48 of 2001 and the Piped-Gas Regulations 2007; the licence lists the codes, normally ASME B31.8 or ISO 13623, with the OHS Act regulations. <b>Mozambique:</b> licensing under the Petroleum Law 21/2014 and the Petroleum Operations Regulations (Decree 34/2015), regulated by INP; the law requires internationally accepted standards and good oilfield practice, so the design basis names B31.8 or ISO 13623.</p></article>
+      <article><h3>About the numbers</h3><p>[Illustrative data, for training only.] Factors, tables and clause numbers follow ASME B31.8-2003, the edition in the course folder. Later editions renumber the clauses (for example 841.1.1 and Table 841.1.6-1) and may change values: check against the edition in force for the project. The route, buildings, D/t handling limit and steel prices are invented.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the designer</h2>
+    <ul>
+      <li><b>Read the route</b>: houses, a village and a town lie along a 12 km line. Move over the map: the dashed box is the 1-mile, ¼-mile-wide class-location unit, and the readout counts the buildings in it.</li>
+      <li><b>Design</b>: choose pipe size, grade, MAOP, temperature and seam. Every 10 m of route gets a location class, a design factor and a wall from the standard list. The strips under the map show class, F, wall and high consequence areas.</li>
+      <li><b>Change the route</b>: pick a tool and click the map to add houses, an estate, flats, a school, a road crossing or a station. Erase removes the nearest item.</li>
+      <li><b>Build and operate</b>: Build freezes the walls and records the test pressure. Then add buildings, or press +5 years, and see whether the MAOP is still allowed by Table 854.1(c). Reduce the MAOP or replace the pipe to comply.</li>
+      <li><b>Record</b> readings to compare designs and to tick off the learning tasks.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>B</kbd> build · <kbd>Y</kbd> +5 years · <kbd>R</kbd> record · <kbd>1</kbd>–<kbd>8</kbd> tools · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bearing and Lubrication Rig</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 13</span>
+    <h1>Bearing and Lubrication Rig</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Stopped</span>
+    <span class="pill regime hydro" id="pillRegime">—</span>
+    <span class="pill" id="pillT">oil —</span>
+    <span class="pill warn hidden" id="pillWipe">Metal contact — bearing wiping</span>
+    <span class="pill amber hidden" id="pillHot">Oil too hot</span>
+    <span class="pill amber hidden" id="pillPmax">Bearing pressure above limit</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Journal bearing or rolling-element bearing under load">
+    <div class="rig-head">
+      <h2 id="rigTitle">Journal bearing · eccentric journal, oil film and pressure lobe</h2>
+      <span class="legend"><i class="sw brass"></i>bush <i class="sw water"></i>oil film <i class="sw taps"></i>film pressure / load</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="readouts" id="roJ">
+      <div class="ro"><span class="k">Sommerfeld number</span><span class="v" id="roS">—</span><span class="u">S = (R/c)² μN/P</span></div>
+      <div class="ro"><span class="k">Eccentricity ratio</span><span class="v" id="roE">—</span><span class="u">ε · attitude angle <span id="roPhi">—</span>°</span></div>
+      <div class="ro" id="roH0Box"><span class="k">Minimum film</span><span class="v" id="roH0">—</span><span class="u">µm · λ = <span id="roLam">—</span></span></div>
+      <div class="ro"><span class="k">Friction coefficient</span><span class="v" id="roF">—</span><span class="u">torque <span id="roTq">—</span> N·m</span></div>
+      <div class="ro" id="roPlBox"><span class="k">Power loss</span><span class="v" id="roPl">—</span><span class="u">W · Hersey μN/P <span id="roHz">—</span></span></div>
+      <div class="ro" id="roTBox"><span class="k">Oil temperature</span><span class="v" id="roTo">—</span><span class="u">°C film · viscosity <span id="roMu">—</span> mPa·s</span></div>
+      <div class="ro" id="roPBox"><span class="k">Bearing pressure</span><span class="v" id="roP">—</span><span class="u">MPa (W / L·D) · limit 5</span></div>
+      <div class="ro"><span class="k">Oil flow</span><span class="v" id="roQ">—</span><span class="u">L/min side leakage · supply <span id="roQs">—</span></span></div>
+      <div class="ro"><span class="k">Clearance</span><span class="v" id="roC">—</span><span class="u">µm radial · c/R <span id="roCR">—</span></span></div>
+      <div class="ro"><span class="k">Surface speed</span><span class="v" id="roV">—</span><span class="u">m/s · <span id="roN">—</span> rpm</span></div>
+    </div>
+    <div class="readouts hidden" id="roR">
+      <div class="ro"><span class="k">Equivalent load P</span><span class="v" id="rrP">—</span><span class="u">kN · X <span id="rrX">—</span> Y <span id="rrY">—</span></span></div>
+      <div class="ro" id="rrLBox"><span class="k">Basic life L10</span><span class="v" id="rrL10">—</span><span class="u">h · <span id="rrL10r">—</span> million rev</span></div>
+      <div class="ro"><span class="k">Modified life</span><span class="v" id="rrLnm">—</span><span class="u">h · a1 <span id="rra1">—</span> · a<sub>ISO</sub> <span id="rraiso">—</span></span></div>
+      <div class="ro"><span class="k">Load ratio C/P</span><span class="v" id="rrCP">—</span><span class="u">C <span id="rrC">—</span> kN · C0 <span id="rrC0">—</span> kN</span></div>
+      <div class="ro"><span class="k">Viscosity ratio κ</span><span class="v" id="rrK">—</span><span class="u">ν / ν₁ at operating temperature</span></div>
+      <div class="ro" id="rrMBox"><span class="k">Friction torque</span><span class="v" id="rrM">—</span><span class="u">N·mm · loss <span id="rrPl">—</span> W</span></div>
+      <div class="ro" id="rrTBox"><span class="k">Bearing temperature</span><span class="v" id="rrT">—</span><span class="u">°C · limit <span id="rrTlim">—</span></span></div>
+      <div class="ro" id="rrNBox"><span class="k">Speed</span><span class="v" id="rrN">—</span><span class="u">rpm · limit <span id="rrNlim">—</span> rpm</span></div>
+      <div class="ro"><span class="k">Defect frequencies</span><span class="v" id="rrBPFO">—</span><span class="u">Hz BPFO · BPFI <span id="rrBPFI">—</span> · BSF <span id="rrBSF">—</span> · FTF <span id="rrFTF">—</span></span></div>
+      <div class="ro" id="rrMinBox"><span class="k">Minimum load check</span><span class="v" id="rrMin">—</span><span class="u">P ≥ 0.01 C to keep the elements rolling</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="modes" id="modes"><button class="on" data-mode="journal">Journal (plain) bearing</button><button data-mode="rolling">Rolling-element bearing</button></div>
+      <div class="grp-title">Load and speed</div>
+      <div class="ctl"><label for="W">Radial load <output id="WOut">5 kN</output></label><input type="range" id="W" min="0.2" max="50" value="5" step="0.2"></div>
+      <div class="ctl"><label for="N">Shaft speed <output id="NOut">1 500 rpm</output></label><input type="range" id="N" min="20" max="6000" value="1500" step="10"></div>
+      <div class="ctl" id="ctlFa"><label for="Fa">Axial load <output id="FaOut">0 kN</output></label><input type="range" id="Fa" min="0" max="20" value="0" step="0.1"></div>
+      <div class="grp-title" id="grpJ">Journal bearing geometry</div>
+      <div class="ctl jrn"><label for="D">Journal diameter <output id="DOut">60 mm</output></label><input type="range" id="D" min="20" max="200" value="60" step="5"></div>
+      <div class="ctl jrn"><label for="LD">Length / diameter <output id="LDOut">1.0</output></label><input type="range" id="LD" min="0.4" max="1.5" value="1" step="0.05"></div>
+      <div class="ctl jrn"><label for="cr">Clearance ratio c/R <output id="crOut">0.0015</output></label><input type="range" id="cr" min="0.0005" max="0.004" value="0.0015" step="0.0001"></div>
+      <div class="ctl jrn"><label for="Ra">Combined roughness <output id="RaOut">0.8 µm</output></label><input type="range" id="Ra" min="0.1" max="3" value="0.8" step="0.1"></div>
+      <div class="ctl rol hidden"><label>Bearing <select id="brg"><option value="6205">6205 deep-groove ball · 25 mm</option><option value="6208" selected>6208 deep-groove ball · 40 mm</option><option value="6310">6310 deep-groove ball · 50 mm</option><option value="7208">7208 angular-contact ball · 40 mm</option><option value="NU208">NU208 cylindrical roller · 40 mm</option><option value="22210">22210 spherical roller · 50 mm</option></select></label></div>
+      <div class="ctl rol hidden"><label>Contamination <select id="cont"><option value="0.8">Extreme cleanliness (0.8)</option><option value="0.5" selected>Normal cleanliness (0.5)</option><option value="0.2">Slight contamination (0.2)</option><option value="0.05">Heavy contamination (0.05)</option></select></label></div>
+      <div class="ctl rol hidden"><label>Reliability <select id="rel"><option value="1">90 % (a1 = 1)</option><option value="0.64">95 % (a1 = 0.64)</option><option value="0.25">99 % (a1 = 0.25)</option></select></label></div>
+      <div class="grp-title">Lubrication</div>
+      <div class="ctl"><label>Oil grade <select id="oil"><option value="22">ISO VG 22</option><option value="32">ISO VG 32</option><option value="46" selected>ISO VG 46</option><option value="68">ISO VG 68</option><option value="100">ISO VG 100</option><option value="150">ISO VG 150</option><option value="grease">Grease (NLGI 2, base oil VG 100)</option></select></label></div>
+      <div class="ctl"><label for="Tin">Oil supply / ambient temperature <output id="TinOut">40 °C</output></label><input type="range" id="Tin" min="20" max="80" value="40" step="1"></div>
+      <div class="ctl jrn"><label for="Qs">Oil supply <output id="QsOut">100 %</output></label><input type="range" id="Qs" min="0" max="100" value="100" step="5"></div>
+      <div class="ctl"><label for="tscale">Thermal clock <output id="tscaleOut">×20</output></label><input type="range" id="tscale" min="1" max="60" value="20" step="1"></div>
+      <div class="ctl-actions">
+        <button class="act" id="btnRun">Start</button>
+        <button class="act ghost" id="btnStop">Stop</button>
+        <button class="act ghost" id="btnSweep">Speed sweep (Stribeck)</button>
+        <button class="act ghost" id="btnRecord">Record reading</button>
+        <button class="act ghost hidden" id="btnRepair">Replace bearing</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="design">Design point</button>
+          <button class="mini" data-preset="slow">Slow and heavy (boundary)</button>
+          <button class="mini" data-preset="thin">Thin oil, hot supply</button>
+          <button class="mini" data-preset="starve">Oil supply lost</button>
+          <button class="mini" data-preset="tight">Tight clearance</button>
+          <button class="mini" data-preset="roll">Rolling bearing at rated load</button>
+          <button class="mini" data-preset="axial">Axial load on a ball bearing</button>
+          <button class="mini" data-preset="dirty">Contaminated grease</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2 id="chartTitle">Stribeck curve · friction coefficient against μN/P</h2><span class="legend"><i class="sw water"></i>curve for this bearing <i class="sw taps"></i>operating point <i class="sw good"></i>sweep points <span class="pill" style="padding:.1em .5em">boundary · mixed · hydrodynamic</span></span></div>
+      <canvas id="chart" width="900" height="330" aria-label="Stribeck curve or life-load chart"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Traces · last 5 min of thermal time</h2><span class="legend"><i class="sw taps"></i>temperature <i class="sw water"></i>film thickness / life <i class="sw brass"></i>friction</span></div>
+      <canvas id="trace" width="900" height="230" aria-label="Temperature, film and friction traces"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Each reading stores the bearing, load, speed, oil, temperature and the computed film, friction and life values.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="bearing-rig.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Tag</th><th>Mode</th><th>Bearing</th><th>W kN</th><th>Fa kN</th><th>rpm</th><th>Oil</th><th>T °C</th><th>μ mPa·s</th><th>S / κ</th><th>ε / P kN</th><th>h₀ µm / L10 h</th><th>λ / Lnm h</th><th>f / M</th><th>Loss W</th><th>Regime</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>The Stribeck curve</h3><p class="eq">Hersey number = μ N / P &nbsp;·&nbsp; λ = h₀ / √(Ra₁² + Ra₂²)</p><p>Friction in a lubricated contact depends on one group: viscosity times speed over pressure. At low values the surfaces touch (boundary, f ≈ 0.1), in the middle the film carries part of the load (mixed), and beyond it a full film separates the surfaces and friction falls to viscous shear, then rises slowly with speed. The film-thickness ratio λ says which regime you are in: below 1 boundary, 1 to 3 mixed, above 3 full film.</p></article>
+      <article><h3>Journal bearing</h3><p class="eq">S = (R/c)² μN′/P &nbsp;·&nbsp; h₀ = c(1 − ε) &nbsp;·&nbsp; P = W/(L·D)</p><p>The journal runs eccentric in its clearance; the converging wedge builds pressure that carries the load. A larger Sommerfeld number (faster, more viscous, lighter) means a smaller eccentricity and a thicker film. Heat from shearing the film warms the oil, which thins it, which lowers S: the rig iterates until the film temperature settles. Starve the supply and the film breaks down.</p></article>
+      <article><h3>Rolling bearing life</h3><p class="eq">L₁₀ = (C/P)^p × 10⁶ rev &nbsp;·&nbsp; p = 3 balls, 10/3 rollers &nbsp;·&nbsp; L<sub>nm</sub> = a₁ · a<sub>ISO</sub> · L₁₀</p><p>Double the load and a ball bearing lasts an eighth as long. The equivalent load P blends radial and axial loads with X and Y factors; a deep-groove ball bearing pays heavily for axial load. a<sub>ISO</sub> rewards a good viscosity ratio κ and clean lubricant and punishes contamination, especially at light loads.</p></article>
+      <article><h3>Bearing frequencies</h3><p class="eq">BPFO = (n/2)·f<sub>r</sub>(1 − d/D cos α) &nbsp;·&nbsp; BPFI = (n/2)·f<sub>r</sub>(1 + d/D cos α) &nbsp;·&nbsp; FTF = ½ f<sub>r</sub>(1 − d/D cos α)</p><p>The geometry sets where a defect will show in a vibration spectrum. The Rotating Machinery Fault Simulator uses these same numbers.</p></article>
+      <article><h3>Friction and heat</h3><p class="eq">M = f₀ (ν n)^{2/3} d<sub>m</sub>³ + f₁ P d<sub>m</sub> &nbsp;(Palmgren)</p><p>A rolling bearing's friction has a viscous part that grows with speed and viscosity and a load part. Its heat has to leave through the housing; too heavy an oil at high speed is as bad as too light an oil under load.</p></article>
+      <article><h3>About the rig data</h3><p>[Illustrative data, for training only.] Journal bearing uses a short-bearing (Ocvirk) load solution with side-leakage flow and a lumped thermal balance; boundary friction 0.10 blended by λ. Rolling bearings use catalogue-style C and C₀ values, simplified X/Y tables, an a<sub>ISO</sub> curve fit and Palmgren friction. Thermal clock speeds the temperature dynamics.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the rig</h2>
+    <ul>
+      <li><b>Journal mode</b>: set load, speed, geometry and oil, press Start. Watch the journal find its eccentricity, the film thickness and λ, the oil warm up and the point move on the Stribeck curve. The speed sweep traces the curve for you.</li>
+      <li><b>Rolling mode</b>: pick a bearing, set radial and axial load, speed and lubricant. Read the equivalent load, L10 and modified life, friction torque, temperature and defect frequencies; the chart shows life against load.</li>
+      <li><b>Failure modes</b>: metal contact and wiping, oil overheating, pressure above the babbitt limit, speed above the bearing limit, too little load to keep the elements rolling.</li>
+      <li><b>Record</b> readings to compare oils, clearances and loads in the tasks.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>Space</kbd> start / stop · <kbd>R</kbd> record · <kbd>1</kbd> / <kbd>2</kbd> mode · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Control Valve and PID Loop Bench</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 21</span>
+    <h1>Control Valve and PID Loop Bench</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Running</span>
+    <span class="pill" id="pillState">—</span>
+    <span class="pill" id="pillMode">—</span>
+    <span class="pill warn hidden" id="pillOsc">Loop oscillating</span>
+    <span class="pill warn hidden" id="pillWind">Output saturated — integral winding up</span>
+    <span class="pill amber hidden" id="pillStick">Stiction limit cycle</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Control loop with valve, process and controller">
+    <div class="rig-head">
+      <h2 id="rigTitle">Flow loop · pump, control valve, flow transmitter, controller</h2>
+      <span class="legend"><i class="sw water"></i>PV <i class="sw ink"></i>SP <i class="sw brass"></i>OP <i class="sw steel"></i>stem</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="readouts">
+      <div class="ro"><span class="k">Process variable</span><span class="v" id="roPV">—</span><span class="u">% · setpoint <span id="roSP">—</span> %</span></div>
+      <div class="ro" id="roEBox"><span class="k">Error</span><span class="v" id="roE">—</span><span class="u">% (SP − PV)</span></div>
+      <div class="ro" id="roOPBox"><span class="k">Controller output</span><span class="v" id="roOP">—</span><span class="u">% · valve stem <span id="roStem">—</span> %</span></div>
+      <div class="ro"><span class="k">Flow</span><span class="v" id="roQ">—</span><span class="u">m³/h · full open <span id="roQmax">—</span></span></div>
+      <div class="ro" id="roAuthBox"><span class="k">Valve Δp and authority</span><span class="v" id="roDp">—</span><span class="u">bar · authority <span id="roAuth">—</span> · installed gain <span id="roGain">—</span></span></div>
+      <div class="ro" id="roOvBox"><span class="k">Last step · overshoot</span><span class="v" id="roOv">—</span><span class="u">% · settling <span id="roTs">—</span> s · IAE <span id="roIae">—</span></span></div>
+      <div class="ro"><span class="k">Oscillation</span><span class="v" id="roPu">—</span><span class="u">s period · amplitude ±<span id="roAmp">—</span> %</span></div>
+      <div class="ro"><span class="k">Identified process</span><span class="v" id="roK">—</span><span class="u">gain %/% · time constant · dead time</span></div>
+      <div class="ro"><span class="k">Suggested Kc / Ti / Td</span><span class="v" id="roTune">—</span><span class="u" id="roTuneName">no data yet</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="types" id="types"><button class="on" data-type="flow">Flow loop</button><button data-type="level">Level loop</button><button data-type="temp">Temperature loop</button></div>
+      <div class="grp-title">Control valve</div>
+      <div class="ctl"><label>Inherent characteristic <select id="char"><option value="linear">Linear</option><option value="eqpct" selected>Equal percentage (R = 50)</option><option value="quick">Quick opening</option></select></label></div>
+      <div class="ctl"><label for="Kv">Valve Kv (full open) <output id="KvOut">60</output></label><input type="range" id="Kv" min="20" max="200" value="60" step="5"></div>
+      <div class="ctl"><label for="Kp">Pipe / system resistance (lowers authority) <output id="KpOut">0.6</output></label><input type="range" id="Kp" min="0" max="10" value="0.6" step="0.1"></div>
+      <div class="ctl"><label for="taua">Actuator time constant <output id="tauaOut">1.0 s</output></label><input type="range" id="taua" min="0.2" max="6" value="1" step="0.1"></div>
+      <div class="ctl"><label for="stick">Stiction (deadband) <output id="stickOut">0.0 %</output></label><input type="range" id="stick" min="0" max="6" value="0" step="0.5"></div>
+      <div class="ctl"><label>Positioner <select id="positioner"><option value="off" selected>None</option><option value="on">Smart positioner (cuts stiction to 15 %)</option></select></label></div>
+      <div class="grp-title">Controller</div>
+      <div class="ctl"><label for="SP">Setpoint <output id="SPOut">50 %</output></label><input type="range" id="SP" min="0" max="100" value="50" step="1"></div>
+      <div class="ctl"><label for="OPm">Manual output <output id="OPmOut">60 %</output></label><input type="range" id="OPm" min="0" max="100" value="60" step="1"></div>
+      <div class="ctl"><label for="Kc">Gain Kc <output id="KcOut">1.00</output></label><input type="range" id="Kc" min="0.1" max="12" value="1" step="0.1"></div>
+      <div class="ctl"><label for="Ti">Integral time Ti (0 = off) <output id="TiOut">10 s</output></label><input type="range" id="Ti" min="0" max="120" value="10" step="1"></div>
+      <div class="ctl"><label for="Td">Derivative time Td <output id="TdOut">0.0 s</output></label><input type="range" id="Td" min="0" max="20" value="0" step="0.5"></div>
+      <div class="ctl"><label>Anti-windup <select id="aw"><option value="on" selected>On (clamp)</option><option value="off">Off</option></select></label></div>
+      <div class="ctl"><label>Controller action <select id="action"><option value="reverse" selected>Reverse (open valve when PV low)</option><option value="direct">Direct (wrong for this loop)</option></select></label></div>
+      <div class="grp-title">Process and disturbances</div>
+      <div class="ctl"><label for="theta">Dead time <output id="thetaOut">1.0 s</output></label><input type="range" id="theta" min="0" max="15" value="1" step="0.5"></div>
+      <div class="ctl"><label for="taup">Process time constant <output id="taupOut">3 s</output></label><input type="range" id="taup" min="1" max="120" value="3" step="1"></div>
+      <div class="ctl"><label for="noise">Measurement noise <output id="noiseOut">0.2 %</output></label><input type="range" id="noise" min="0" max="3" value="0.2" step="0.1"></div>
+      <div class="ctl"><label for="Ps">Pump pressure (disturbance) <output id="PsOut">6.0 bar</output></label><input type="range" id="Ps" min="3" max="10" value="6" step="0.1"></div>
+      <div class="ctl"><label for="Pd">Downstream pressure <output id="PdOut">2.0 bar</output></label><input type="range" id="Pd" min="0" max="5" value="2" step="0.1"></div>
+      <div class="ctl"><label for="load">Load (tank outflow / product flow) <output id="loadOut">30 m³/h</output></label><input type="range" id="load" min="5" max="80" value="30" step="1"></div>
+      <div class="ctl"><label for="tscale">Clock <output id="tscaleOut">×1</output></label><input type="range" id="tscale" min="1" max="10" value="1" step="1"></div>
+      <div class="ctl-actions">
+        <button class="act" id="btnRun">Running</button>
+        <button class="act ghost" id="btnStop">Pause</button>
+        <button class="act ghost" id="btnMode">Mode: MANUAL</button>
+        <button class="act ghost" id="btnSPup">SP +10</button>
+        <button class="act ghost" id="btnSPdn">SP −10</button>
+        <button class="act ghost" id="btnApply">Apply suggested tuning</button>
+        <button class="act ghost" id="btnRecord">Record reading</button>
+        <button class="act ghost" id="btnClearT">Clear trends</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="steptest">Manual step test</button>
+          <button class="mini" data-preset="ponly">P-only: offset</button>
+          <button class="mini" data-preset="pi">PI, well tuned</button>
+          <button class="mini" data-preset="highgain">Gain too high</button>
+          <button class="mini" data-preset="windup">Windup (SP 100 %)</button>
+          <button class="mini" data-preset="stiction">Stiction 2 %</button>
+          <button class="mini" data-preset="lowauth">Linear valve, low authority</button>
+          <button class="mini" data-preset="temp">Temperature loop, dead time</button>
+          <button class="mini" data-preset="level">Level loop (integrating)</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2>Trends · PV, SP, OP and stem</h2><span class="legend"><i class="sw water"></i>PV <i class="sw ink"></i>SP <i class="sw brass"></i>OP <i class="sw steel"></i>stem <i class="sw taps"></i>step</span></div>
+      <canvas id="chart" width="900" height="300" aria-label="Loop trends"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Valve characteristic · inherent (grey) and installed (blue)</h2></div>
+      <canvas id="chart2" width="900" height="250" aria-label="Valve characteristic"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Controller output against stem · lag and stiction</h2></div>
+      <canvas id="trace" width="900" height="180" aria-label="Output and stem"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Each reading stores the loop, valve, tuning, dead time, the current PV/OP/stem/flow, installed valve gain, the last step's overshoot, settling and IAE, any oscillation period and the identified process model.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="control-loop.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Tag</th><th>Loop</th><th>Char.</th><th>Auth.</th><th>Stiction</th><th>Mode</th><th>Kc</th><th>Ti</th><th>Td</th><th>AW</th><th>θ s</th><th>SP</th><th>PV</th><th>OP</th><th>Stem</th><th>Q</th><th>Gain</th><th>Ov %</th><th>Settle s</th><th>IAE</th><th>Pu</th><th>K</th><th>τ</th><th>θ id</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>Valve characteristics</h3><p class="eq">Q = K<sub>v</sub> f(x) √Δp<sub>v</sub> &nbsp;·&nbsp; linear f = x &nbsp;·&nbsp; equal % f = R^{x−1} &nbsp;·&nbsp; authority = Δp<sub>v,open</sub> / Δp<sub>system</sub></p><p>The inherent characteristic is what the valve does with a constant pressure drop. Installed in a pipe, the drop across the valve falls as it opens (the pipe takes more of the pump head), so every characteristic bends towards quick opening. With low authority a linear valve becomes almost on-off near closed; an equal-percentage valve compensates and stays roughly linear in flow, which is why it is the usual choice.</p></article>
+      <article><h3>PID</h3><p class="eq">OP = K<sub>c</sub> [ e + (1/T<sub>i</sub>) ∫e dt + T<sub>d</sub> de/dt ]</p><p>Proportional action alone leaves an offset because it needs an error to hold the valve anywhere but its bias. Integral action keeps pushing until the error is zero, but too much of it (short Ti) makes the loop oscillate. Derivative anticipates, and is applied to the measurement so setpoint steps do not kick the valve. Anti-windup stops the integral accumulating while the valve is on a limit; without it the loop overshoots badly when the setpoint becomes reachable again.</p></article>
+      <article><h3>Identification and tuning</h3><p class="eq">FOPDT: K = ΔPV/ΔOP · τ = 1.5 (t₆₃ − t₂₈) · θ = t₆₃ − τ &nbsp;·&nbsp; lambda: K<sub>c</sub> = τ / K(λ + θ), T<sub>i</sub> = τ &nbsp;·&nbsp; ZN closed loop: K<sub>c</sub> = 0.6 K<sub>u</sub>, T<sub>i</sub> = P<sub>u</sub>/2, T<sub>d</sub> = P<sub>u</sub>/8</p><p>A manual step gives the process gain, time constant and dead time from the response. Lambda tuning sets a gentle closed loop; Ziegler–Nichols from the ultimate gain and period gives a faster, more oscillatory one. Dead time is the enemy: the more of it, the lower the gain you can use.</p></article>
+      <article><h3>Stiction</h3><p>A sticking valve does not move until the actuator force overcomes friction, then jumps. With integral action the controller keeps ramping until the valve jumps past the setpoint, and the loop limit-cycles with a square-ish PV and a triangular OP. A positioner with its own feedback largely hides it; the real cure is packing maintenance.</p></article>
+      <article><h3>About the numbers</h3><p>[Illustrative data, for training only.] The flow loop is a first-order lag plus dead time on the installed valve flow; the level tank integrates inflow minus outflow; the temperature loop is a slower lag with more dead time. Stiction is a simple deadband-and-slip model. Real loops add nonlinearity, valve hysteresis and transmitter dynamics.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the bench</h2>
+    <ul>
+      <li><b>Manual first</b>: the controller starts in manual. Move the manual output and watch the valve stem, the flow and the PV respond. A step of 10 % and a minute of patience gives an identified process model and a suggested tuning.</li>
+      <li><b>Auto</b>: switch the mode, set Kc, Ti and Td, and step the setpoint with the +10 / −10 buttons. The readouts give overshoot, settling time and IAE for the last step; oscillation is detected and its period shown.</li>
+      <li><b>Valve</b>: change the characteristic, the system resistance (authority) and stiction, and watch the installed characteristic chart and the OP-against-stem trace.</li>
+      <li><b>Disturbances</b>: move the pump pressure or the load and watch the loop recover. Record readings to compare tunings and valves in the tasks.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>Space</kbd> run / pause · <kbd>A</kbd> auto / manual · <kbd>+</kbd> / <kbd>−</kbd> setpoint ±10 · <kbd>R</kbd> record · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

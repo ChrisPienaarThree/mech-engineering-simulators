@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Loads on Beams</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 10</span>
+    <h1>Loads on Beams Demonstrator</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill ok" id="pillState">—</span>
+    <span class="pill" id="pillUtil">stress —</span>
+    <span class="pill" id="pillDef">deflection —</span>
+    <span class="pill warn hidden" id="pillYield">YIELD — stress above f<sub>y</sub></span>
+    <span class="pill amber hidden" id="pillDefl">Deflection limit exceeded</span>
+    <span class="pill warn hidden" id="pillLift">Support lifting off</span>
+    <span class="pill warn hidden" id="pillMech">Mechanism — beam not held</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Beam with supports, loads, reactions and deflected shape">
+    <div class="rig-head">
+      <h2>Beam bench · drag point loads and supports along the beam</h2>
+      <span class="legend"><i class="sw taps"></i>point load <i class="sw water"></i>distributed load <i class="sw brass"></i>couple <i class="sw good"></i>reaction <i class="sw water"></i>deflected shape (exaggerated)</span>
+    </div>
+    <svg id="beam" class="rig-svg" viewBox="0 0 900 330" role="img" aria-label="Beam drawing"></svg>
+
+    <div class="readouts">
+      <div class="ro"><span class="k">Reaction A</span><span class="v" id="roRA">—</span><span class="u">kN <span id="roMA"></span></span></div>
+      <div class="ro"><span class="k">Reaction B</span><span class="v" id="roRB">—</span><span class="u">kN <span id="roMB"></span></span></div>
+      <div class="ro"><span class="k">Max shear</span><span class="v" id="roV">—</span><span class="u">kN at <span id="roVx">—</span> m</span></div>
+      <div class="ro"><span class="k">Max moment</span><span class="v" id="roM">—</span><span class="u">kNm at <span id="roMx">—</span> m · min <span id="roMmin">—</span></span></div>
+      <div class="ro" id="roSBox"><span class="k">Bending stress</span><span class="v" id="roS">—</span><span class="u">MPa · f<sub>y</sub> <span id="roFy">—</span> · Z <span id="roZ">—</span> cm³</span></div>
+      <div class="ro" id="roDBox"><span class="k">Max deflection</span><span class="v" id="roD">—</span><span class="u">mm at <span id="roDx">—</span> m · span/<span id="roDr">—</span></span></div>
+      <div class="ro"><span class="k">Section</span><span class="v" id="roI">—</span><span class="u">cm⁴ second moment · EI <span id="roEI">—</span> kNm²</span></div>
+      <div class="ro"><span class="k">Total load</span><span class="v" id="roWt">—</span><span class="u">kN incl. self-weight <span id="roSw">—</span> kN</span></div>
+      <div class="ro"><span class="k">Contraflexure</span><span class="v" id="roCf">—</span><span class="u">points where M changes sign</span></div>
+      <div class="ro"><span class="k">Utilisation</span><span class="v" id="roU">—</span><span class="u">% of allowable (f<sub>y</sub>/1.5) · deflection <span id="roUd">—</span> %</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="grp-title">Beam and supports</div>
+      <div class="ctl"><label for="L">Span (overall length) <output id="LOut">6.0 m</output></label><input type="range" id="L" min="1" max="12" value="6" step="0.1"></div>
+      <div class="ctl"><label>Support arrangement <select id="stype"><option value="ss">Simply supported (pin + roller)</option><option value="cant">Cantilever (fixed at A)</option><option value="prop">Propped cantilever (fixed A + roller B)</option><option value="ff">Fixed both ends</option></select></label></div>
+      <div class="ctl"><label class="chk"><input type="checkbox" id="selfw"> Include beam self-weight</label></div>
+      <div class="ctl"><label for="xa">Support A position <output id="xaOut">0.0 m</output></label><input type="range" id="xa" min="0" max="12" value="0" step="0.05"></div>
+      <div class="ctl"><label for="xb">Support B position <output id="xbOut">6.0 m</output></label><input type="range" id="xb" min="0" max="12" value="6" step="0.05"></div>
+      <div class="ctl"><label for="exag">Deflection drawing scale <output id="exagOut">auto</output></label><input type="range" id="exag" min="0" max="500" value="0" step="10"></div>
+      <div class="grp-title">Section and material</div>
+      <div class="ctl"><label>Section <select id="sec"><option value="rect">Solid rectangle b × h</option><option value="isec" selected>I-section (parametric)</option><option value="rhs">Rectangular hollow b × h × t</option><option value="circ">Solid round d</option><option value="chs">Circular hollow d × t</option></select></label></div>
+      <div class="ctl"><label for="d1"><span id="d1Name">Flange width b</span> <output id="d1Out">100 mm</output></label><input type="range" id="d1" min="20" max="400" value="100" step="5"></div>
+      <div class="ctl"><label for="d2"><span id="d2Name">Depth h</span> <output id="d2Out">200 mm</output></label><input type="range" id="d2" min="20" max="600" value="200" step="5"></div>
+      <div class="ctl"><label for="d3"><span id="d3Name">Flange thickness t</span> <output id="d3Out">8 mm</output></label><input type="range" id="d3" min="2" max="30" value="8" step="1"></div>
+      <div class="ctl"><label>Material <select id="mat"><option value="steel">Steel S355 · E 210 GPa</option><option value="alu">Aluminium 6082 · E 70 GPa</option><option value="timber">Timber C24 · E 11 GPa</option></select></label></div>
+      <div class="ctl"><label for="dlim">Deflection limit span/ <output id="dlimOut">250</output></label><input type="range" id="dlim" min="150" max="500" value="250" step="10"></div>
+      <div class="grp-title">Loads <span class="btns"><button class="mini" id="addP">+ point load</button><button class="mini" id="addW">+ distributed load</button><button class="mini" id="addM">+ couple</button></span></div>
+      <div class="loads" id="loads"></div>
+      <div class="ctl-actions">
+        <button class="act ghost" id="btnRecord">Record reading</button>
+        <button class="act ghost" id="btnClearLoads">Clear loads</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="pl">Central point load</button>
+          <button class="mini" data-preset="udl">Uniform load</button>
+          <button class="mini" data-preset="four">Four-point bending</button>
+          <button class="mini" data-preset="cant">Cantilever tip load</button>
+          <button class="mini" data-preset="over">Overhangs, uniform load</button>
+          <button class="mini" data-preset="prop">Propped cantilever</button>
+          <button class="mini" data-preset="ff">Fixed both ends</button>
+          <button class="mini" data-preset="couple">Applied couple</button>
+          <button class="mini" data-preset="uplift">Load on the overhang</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2>Shear force · bending moment · deflection</h2><span class="legend">sagging moment drawn upward · deflection downward · values at the extremes</span></div>
+      <canvas id="charts" width="900" height="620" aria-label="Shear force, bending moment and deflection diagrams"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Each reading stores the beam, supports, section, loads, reactions and the extremes of shear, moment, stress and deflection.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="beam-loads.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Tag</th><th>Supports</th><th>L m</th><th>xA</th><th>xB</th><th>Section</th><th>I cm⁴</th><th>Loads</th><th>RA kN</th><th>RB kN</th><th>Vmax kN</th><th>Mmax kNm</th><th>at m</th><th>Mmin kNm</th><th>σ MPa</th><th>δ mm</th><th>at m</th><th>span/δ</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>Reactions first</h3><p>A simply supported beam is solved by moments about one support. Fixed ends and propped cantilevers are statically indeterminate: the extra reactions come from compatibility (the fixed end cannot rotate, the prop cannot move), which is what the solver here does with beam finite elements. The diagrams are then built by statics from the reactions, so they are exact whichever support arrangement you choose.</p></article>
+      <article><h3>The standard results</h3><p class="eq">Point load mid-span: M = PL/4, δ = PL³/48EI &nbsp;·&nbsp; UDL: M = wL²/8, δ = 5wL⁴/384EI</p><p class="eq">Cantilever tip load: M = PL, δ = PL³/3EI &nbsp;·&nbsp; Fixed ends, UDL: M<sub>support</sub> = wL²/12, M<sub>mid</sub> = wL²/24, δ = wL⁴/384EI</p><p>Use them to check the bench, then break them: move a support, add an overhang, change the section.</p></article>
+      <article><h3>Shear and moment</h3><p>Shear is the running sum of the vertical forces from the left; the moment is the running integral of the shear. A point load steps the shear; a couple steps the moment; a distributed load makes the shear slope and the moment curve. The moment is greatest where the shear crosses zero, and a point of contraflexure is where the moment itself changes sign.</p></article>
+      <article><h3>Stress and section</h3><p class="eq">σ = M / Z &nbsp;·&nbsp; Z = I / y<sub>max</sub> &nbsp;·&nbsp; I<sub>rect</sub> = bh³/12</p><p>Doubling the depth of a rectangle multiplies I by eight and Z by four. An I-section puts the material where the stress is, far from the neutral axis, which is why it beats a solid rectangle of the same mass many times over.</p></article>
+      <article><h3>Deflection and stiffness</h3><p class="eq">EI v″ = M(x)</p><p>Deflection depends on E and I, not on strength. Aluminium at the same stress deflects three times as much as steel; timber twelve times. Serviceability limits (span/250 here, adjustable) often govern before the material yields.</p></article>
+      <article><h3>Overhangs and uplift</h3><p>Moving the supports in from the ends of a uniformly loaded beam reduces the mid-span moment while building a hogging moment over the supports; at about 0.207 L overhang the two are equal and the peak moment is at its lowest. Load an overhang heavily and the far support goes into uplift: a roller cannot hold the beam down.</p></article>
+      <article><h3>About the numbers</h3><p>[Illustrative data, for training only.] Sections are parametric; allowable stress is f<sub>y</sub>/1.5; no lateral-torsional buckling, shear deflection, or dynamic effects. 200 beam elements; loads are distributed consistently to the nodes.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the beam bench</h2>
+    <ul>
+      <li><b>Set the beam</b>: span, support arrangement and support positions. Supports can be dragged along the beam for overhangs.</li>
+      <li><b>Add loads</b>: point loads, distributed loads and couples from the load list. Drag the red point-load arrows and the support triangles on the drawing.</li>
+      <li><b>Read</b> reactions on the drawing, the extremes in the readouts, and the shear, moment and deflection diagrams on the right. The deflected shape is drawn exaggerated on the beam.</li>
+      <li><b>Section and material</b> change stress and deflection but not the moment: compare a rectangle with an I-section, steel with aluminium.</li>
+      <li><b>Record</b> readings and let the tasks check them against the standard results.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>R</kbd> record · <kbd>P</kbd> add point load · <kbd>W</kbd> add distributed load · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

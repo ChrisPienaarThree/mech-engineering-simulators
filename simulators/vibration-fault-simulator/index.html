@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vibration Fault Simulator</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 16</span>
+    <h1>Rotating Machinery Fault Simulator</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Stopped</span>
+    <span class="pill" id="pillOverall">—</span>
+    <span class="pill" id="pillFaults">no faults introduced</span>
+    <span class="pill warn hidden" id="pillRes">Near resonance</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnBlind">Blind machine</button>
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Motor-driven shaft rig with interchangeable components and sensors">
+    <div class="rig-head">
+      <h2>Machine train</h2>
+      <span class="legend"><label class="chk"><input type="checkbox" id="fitBelt"> Belt drive to fan</label><label class="chk"><input type="checkbox" id="fitGear"> Gearbox</label><label class="chk"><input type="checkbox" id="fitDisc2"> Second disc</label></span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="speedrow">
+      <label for="rpm">Motor speed <output id="rpmOut">1 480 rpm</output></label>
+      <input type="range" id="rpm" min="300" max="3000" value="1480" step="10">
+      <span class="btns"><button class="mini" data-rpm="0">Stop</button><button class="mini" data-rpm="980">980</button><button class="mini" data-rpm="1480">1480</button><button class="mini" data-rpm="2950">2950</button><button class="mini" id="btnSweep">Sweep 300 → 3000</button></span>
+    </div>
+
+    <nav class="ftabs" id="ftabs">
+      <button class="on" data-f="unbalance">Unbalance</button><button data-f="misalign">Misalignment</button><button data-f="loose">Looseness / bent shaft</button><button data-f="bearing">Bearing</button><button data-f="gearbelt">Gears / belt</button><button data-f="resonance">Resonance</button>
+    </nav>
+    <div class="fpanel on" id="f-unbalance">
+      <p class="note">Bolt a mass to the disc and watch the 1× peak appear. Then find the correction mass that cancels it — single-plane balancing with the tachometer as the phase reference.</p>
+      <div class="ctlgrid">
+        <div><label for="ubMass">Unbalance mass on disc 1 <output id="ubMassOut">0 g</output></label><input type="range" id="ubMass" min="0" max="60" value="0" step="1"></div>
+        <div><label for="ubAng">at angle from key <output id="ubAngOut">0°</output></label><input type="range" id="ubAng" min="0" max="359" value="0" step="1"></div>
+        <div><label for="trMass">Correction / trial mass <output id="trMassOut">0 g</output></label><input type="range" id="trMass" min="0" max="60" value="0" step="1"></div>
+        <div><label for="trAng">at angle from key <output id="trAngOut">0°</output></label><input type="range" id="trAng" min="0" max="359" value="0" step="1"></div>
+      </div>
+    </div>
+    <div class="fpanel" id="f-misalign">
+      <p class="note">Shim the motor feet wrong. Angular misalignment shows as axial 1× with 2×, 180° out of phase across the coupling; offset shows as radial 2×.</p>
+      <div class="ctlgrid">
+        <div><label for="maAng">Angular misalignment <output id="maAngOut">0.0 mm/100 mm</output></label><input type="range" id="maAng" min="0" max="10" value="0" step="0.5"></div>
+        <div><label for="maOff">Parallel offset <output id="maOffOut">0.00 mm</output></label><input type="range" id="maOff" min="0" max="1" value="0" step="0.05"></div>
+        <div><label for="cplType">Coupling <select id="cplType"><option value="flex">Flexible element</option><option value="rigid">Rigid</option><option value="gear">Gear coupling</option></select></label></div>
+      </div>
+    </div>
+    <div class="fpanel" id="f-loose">
+      <p class="note">Back off the hold-down bolts on bearing 2, or fit a bent shaft. Looseness gives a comb of harmonics and half-order lines; a bent shaft gives axial 1× with the two ends 180° apart.</p>
+      <div class="ctlgrid">
+        <div><label for="looseBolt">Bearing 2 hold-down bolt torque <output id="looseBoltOut">100 %</output></label><input type="range" id="looseBolt" min="0" max="100" value="100" step="5"></div>
+        <div><label for="looseFit">Bearing fit clearance (looseness type C) <output id="looseFitOut">0 %</output></label><input type="range" id="looseFit" min="0" max="100" value="0" step="5"></div>
+        <div><label for="bent">Shaft bend (run-out at disc) <output id="bentOut">0.00 mm</output></label><input type="range" id="bent" min="0" max="0.5" value="0" step="0.02"></div>
+      </div>
+    </div>
+    <div class="fpanel" id="f-bearing">
+      <p class="note">Fit a damaged 6205 bearing. Defect impacts ring the bearing's own resonance around 3.5 kHz; the raw spectrum shows a haystack there and the envelope spectrum shows the defect frequency lines.</p>
+      <div class="ctlgrid">
+        <div><label>Bearing with the defect <select id="brgPos"><option value="B1">Bearing 1 (drive end)</option><option value="B2">Bearing 2 (non-drive end)</option></select></label></div>
+        <div><label>Defect <select id="brgType"><option value="none">None (good bearing)</option><option value="bpfo">Outer race</option><option value="bpfi">Inner race</option><option value="bsf">Rolling element</option><option value="ftf">Cage</option></select></label></div>
+        <div><label for="brgSev">Severity (stage 1 → 4) <output id="brgSevOut">1</output></label><input type="range" id="brgSev" min="1" max="4" value="1" step="1"></div>
+        <div><label for="brgLube">Lubrication <output id="brgLubeOut">good</output></label><input type="range" id="brgLube" min="0" max="100" value="100" step="10"></div>
+      </div>
+    </div>
+    <div class="fpanel" id="f-gearbelt">
+      <p class="note">Fit the gearbox (23 : 57 teeth) or the belt drive (120 : 240 mm pulleys, 1.5 m belt) using the checkboxes above. Gear faults appear at gear-mesh frequency with sidebands; belt faults below 1×.</p>
+      <div class="ctlgrid">
+        <div><label>Gear defect <select id="gearType"><option value="none">None</option><option value="wear">Tooth wear (all teeth)</option><option value="crack">Cracked pinion tooth</option><option value="eccentric">Eccentric gear</option></select></label></div>
+        <div><label for="gearSev">Gear defect severity <output id="gearSevOut">0 %</output></label><input type="range" id="gearSev" min="0" max="100" value="0" step="5"></div>
+        <div><label>Belt condition <select id="beltType"><option value="none">Good belt</option><option value="defect">Damaged belt / lump</option><option value="loose">Loose belt</option><option value="pulley">Misaligned pulleys</option></select></label></div>
+        <div><label for="beltSev">Belt fault severity <output id="beltSevOut">0 %</output></label><input type="range" id="beltSev" min="0" max="100" value="0" step="5"></div>
+      </div>
+    </div>
+    <div class="fpanel" id="f-resonance">
+      <p class="note">The bearing pedestal has a natural frequency. Sweep the speed through it and watch the 1× amplitude peak while the phase swings through 90°. Change the pedestal stiffness to move it; use the bump test to find it with the machine stopped.</p>
+      <div class="ctlgrid">
+        <div><label for="fn">Pedestal natural frequency <output id="fnOut">2 400 cpm</output></label><input type="range" id="fn" min="600" max="3600" value="2400" step="30"></div>
+        <div><label for="zeta">Damping ratio ζ <output id="zetaOut">0.05</output></label><input type="range" id="zeta" min="0.02" max="0.2" value="0.05" step="0.01"></div>
+        <div class="ctl-actions"><button class="act" id="btnBump">Bump test (machine stopped)</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="meas">
+      <div class="measrow">
+        <label>Measurement point <select id="point"><option value="MDE">Motor drive end</option><option value="B1" selected>Bearing 1 (drive end)</option><option value="B2">Bearing 2 (non-drive end)</option><option value="GB">Gearbox</option><option value="FAN">Fan bearing</option></select></label>
+        <div class="seg" id="dirSeg"><button data-dir="H" class="on">H</button><button data-dir="V">V</button><button data-dir="A">A</button></div>
+        <div class="overall"><span class="k">Overall 10–1 000 Hz</span><span class="v" id="ovVal">—</span><span class="zone" id="ovZone">—</span></div>
+        <div class="overall"><span class="k">Peak g · crest</span><span class="v" id="pkVal">—</span><span class="zone" id="cfVal"></span></div>
+        <button class="act" id="btnRecord">Record reading</button>
+      </div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>FFT spectrum · velocity</h2>
+        <span class="legend"><label class="chk">F<sub>max</sub> <select id="fmax"><option value="200">200 Hz</option><option value="1000" selected>1 000 Hz</option><option value="5000">5 000 Hz</option></select></label><label class="chk"><input type="checkbox" id="orders" checked> orders of running speed</label><label class="chk"><input type="checkbox" id="cursors"> fault-frequency cursors</label><label class="chk"><input type="checkbox" id="logy"> log amplitude</label></span></div>
+      <canvas id="spec" width="900" height="260" aria-label="Velocity spectrum"></canvas>
+    </div>
+    <div class="two">
+      <div class="chart-box"><div class="chart-head"><h2>Waveform · acceleration</h2><span class="legend"><i class="sw brass"></i>signal <i class="sw taps"></i>tacho pulse</span></div><canvas id="wave" width="450" height="200" aria-label="Time waveform"></canvas></div>
+      <div class="chart-box"><div class="chart-head"><h2>Envelope spectrum · 2–6 kHz demod</h2><span class="legend"><i class="sw good"></i>envelope</span></div><canvas id="env" width="450" height="200" aria-label="Envelope spectrum"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>1× amplitude and phase across the train</h2><span class="legend">phase relative to the tachometer · mm/s peak</span></div>
+      <div class="tablewrap"><table id="phaseTable"><thead><tr><th>Point</th><th>H amp</th><th>H phase</th><th>V amp</th><th>V phase</th><th>A amp</th><th>A phase</th><th>2×/1×</th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Route log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="blind" role="tab">Blind machine — diagnose</button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Each recorded reading stores the point, direction, speed, overall level, 1× and 2× amplitude and phase, and the three largest spectral peaks.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="vibration-route.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Point</th><th>Dir</th><th>rpm</th><th>Overall mm/s</th><th>Zone</th><th>1× mm/s</th><th>1× phase</th><th>2× mm/s</th><th>Peak g</th><th>Crest</th><th>Top peaks (order · mm/s)</th><th>Env top (Hz · g)</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-blind">
+    <div class="blind">
+      <p class="note" id="blindText">Press "Blind machine" to load a machine with a hidden fault. The fault panels are locked; take readings at every point and direction, then name the fault.</p>
+      <div class="choices" id="blindChoices"></div>
+      <div class="feedback" id="blindFb"></div>
+      <span class="pill" id="blindScore">0 diagnosed</span>
+    </div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>Why the spectrum is the diagnostic tool</h3><p>Every fault forces the machine at frequencies tied to its geometry: unbalance at 1× running speed, misalignment at 1× and 2×, looseness at many harmonics, bearing defects at non-integer multiples set by ball count and diameters, gears at teeth × speed. The FFT sorts the waveform into those frequencies so the source can be read off.</p></article>
+      <article><h3>Phase separates the look-alikes</h3><p>Unbalance, bent shaft and misalignment can all put energy at 1×. Phase across the coupling (misalignment: 180° apart), between shaft ends axially (bent shaft: 180°), or between horizontal and vertical (unbalance: about 90°) tells them apart. The tachometer gives the reference.</p></article>
+      <article><h3>Bearing frequencies (6205, 9 balls)</h3><p class="eq">BPFO = 3.58 × &nbsp;·&nbsp; BPFI = 5.42 × &nbsp;·&nbsp; BSF = 2.36 × &nbsp;·&nbsp; FTF = 0.40 ×</p><p>Early bearing damage is tiny in velocity terms but each impact rings the bearing at a few kilohertz. Band-pass the acceleration around that ring, take the envelope, and the repetition rate of the impacts appears as clean lines. Inner-race and ball defects carry 1× or cage sidebands because the defect moves in and out of the load zone.</p></article>
+      <article><h3>Resonance</h3><p class="eq">|H| = 1/√((1 − r²)² + (2ζr)²) &nbsp;·&nbsp; r = f/f<sub>n</sub></p><p>A structural natural frequency amplifies whatever forcing sits near it. Sweep the speed: amplitude peaks and the phase lags by 90° at f<sub>n</sub>. A bump test with the machine stopped rings the same frequency directly.</p></article>
+      <article><h3>ISO 10816-3 zones (group 2, rigid foundation)</h3><p class="eq">A ≤ 1.4 &nbsp;·&nbsp; B ≤ 2.8 &nbsp;·&nbsp; C ≤ 4.5 &nbsp;·&nbsp; D &gt; 4.5 mm/s RMS</p><p>Overall level says how bad; the spectrum says why. Both are needed.</p></article>
+      <article><h3>About the rig data</h3><p>[Illustrative rig data, for training only.] 4-pole motor, flexible coupling, 40 mm shaft on two 6205 bearings with one or two 3 kg discs, optional 23 : 57 gearbox and 120 : 240 mm belt drive. Sensor sensitivities, resonance frequencies and fault amplitudes are representative, not measured.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the simulator</h2>
+    <ul>
+      <li><b>Manufacture a fault</b> in the panels under the machine: add a mass to the disc, mis-shim the motor, loosen a bearing, fit a damaged bearing, damage a gear or belt, or move the pedestal resonance.</li>
+      <li><b>Measure it</b>: pick a point and direction, read the overall level and ISO zone, and read the spectrum, waveform, envelope spectrum and the 1× phase table. Everything is computed from a synthesised acceleration signal, so peaks appear only when the machine actually produces them.</li>
+      <li><b>Order axis</b> shows the spectrum in multiples of running speed, which is how faults are read; switch it off for hertz. Fault-frequency cursors are off by default so learners identify lines themselves.</li>
+      <li><b>Record readings</b> on a route and export them. <b>Blind machine</b> hides a random fault for diagnosis.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>↑</kbd><kbd>↓</kbd> speed · <kbd>H</kbd> <kbd>V</kbd> <kbd>A</kbd> direction · <kbd>1</kbd>–<kbd>5</kbd> point · <kbd>R</kbd> record · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

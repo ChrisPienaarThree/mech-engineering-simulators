@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mass-Spring-Damper</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 11</span>
+    <h1>Mass-Spring-Damper Demonstrator</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Stopped</span>
+    <span class="pill under" id="pillDamp">—</span>
+    <span class="pill" id="pillFn">f<sub>n</sub> —</span>
+    <span class="pill" id="pillR">—</span>
+    <span class="pill warn hidden" id="pillStop">Hitting the stops</span>
+    <span class="pill amber hidden" id="pillRes">Near resonance</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Mass on a spring and damper with a shaker base and a force actuator">
+    <div class="rig-head">
+      <h2>Rig · m ẍ + c ẋ + k x = F(t)</h2>
+      <span class="legend"><i class="sw brass"></i>spring <i class="sw" style="background:var(--steel)"></i>damper <i class="sw taps"></i>force <i class="sw water"></i>motion</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="readouts">
+      <div class="ro"><span class="k">Natural frequency</span><span class="v" id="roFn">—</span><span class="u">Hz · ω<sub>n</sub> <span id="roWn">—</span> rad/s · T <span id="roT">—</span> s</span></div>
+      <div class="ro"><span class="k">Damping ratio ζ</span><span class="v" id="roZ">—</span><span class="u">c<sub>c</sub> <span id="roCc">—</span> N·s/m · <span id="roClass">—</span></span></div>
+      <div class="ro"><span class="k">Damped frequency</span><span class="v" id="roFd">—</span><span class="u">Hz · time constant <span id="roTau">—</span> s · settles <span id="roTs">—</span> s</span></div>
+      <div class="ro"><span class="k">Log decrement δ</span><span class="v" id="roDelta">—</span><span class="u">theory · measured <span id="roDeltaM">—</span> → ζ <span id="roZm">—</span></span></div>
+      <div class="ro"><span class="k">Displacement</span><span class="v" id="roX">—</span><span class="u">mm · amplitude <span id="roAmp">—</span> mm · measured f <span id="roFm">—</span> Hz</span></div>
+      <div class="ro"><span class="k">Frequency ratio r</span><span class="v" id="roR">—</span><span class="u">f / f<sub>n</sub> · phase lag <span id="roPhi">—</span>°</span></div>
+      <div class="ro" id="roMagBox"><span class="k"><span id="roMagName">Magnification</span></span><span class="v" id="roMag">—</span><span class="u">theory · measured <span id="roMagM">—</span></span></div>
+      <div class="ro"><span class="k">Peak velocity · acceleration</span><span class="v" id="roV">—</span><span class="u">m/s · <span id="roA">—</span> m/s² (<span id="roAg">—</span> g)</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="grp-title">System</div>
+      <div class="ctl"><label for="m">Mass (plates) <output id="mOut">2.0 kg</output></label><input type="range" id="m" min="0.5" max="20" value="2" step="0.5"></div>
+      <div class="ctl"><label for="k">Spring stiffness k <output id="kOut">800 N/m</output></label><input type="range" id="k" min="50" max="5000" value="800" step="10"></div>
+      <div class="ctl"><label for="c">Damper c <output id="cOut">4.0 N·s/m</output></label><input type="range" id="c" min="0" max="400" value="4" step="0.5"></div>
+      <div class="ctl"><label for="tscale">Clock <output id="tscaleOut">real time</output></label><input type="range" id="tscale" min="0.1" max="2" value="1" step="0.1"></div>
+      <div class="zeta">Set ζ: <button data-z="0">0</button><button data-z="0.05">0.05</button><button data-z="0.1">0.1</button><button data-z="0.2">0.2</button><button data-z="0.5">0.5</button><button data-z="0.7">0.7</button><button data-z="1">1 (critical)</button><button data-z="2">2</button><span class="note">c = ζ · 2√(km)</span></div>
+      <div class="grp-title">Excitation</div>
+      <div class="modes" id="modes"><button class="on" data-mode="free">Free vibration</button><button data-mode="harmonic">Harmonic force</button><button data-mode="base">Base excitation</button><button data-mode="step">Step force</button><button data-mode="impulse">Impulse</button></div>
+      <div class="ctl" id="ctlX0"><label for="x0">Initial displacement <output id="x0Out">50 mm</output></label><input type="range" id="x0" min="-120" max="120" value="50" step="5"></div>
+      <div class="ctl" id="ctlV0"><label for="v0">Initial velocity <output id="v0Out">0.0 m/s</output></label><input type="range" id="v0" min="-3" max="3" value="0" step="0.1"></div>
+      <div class="ctl" id="ctlF0"><label for="F0"><span id="F0Name">Force amplitude F₀</span> <output id="F0Out">10 N</output></label><input type="range" id="F0" min="0" max="100" value="10" step="1"></div>
+      <div class="ctl" id="ctlY0"><label for="Y0">Base amplitude Y <output id="Y0Out">10 mm</output></label><input type="range" id="Y0" min="0" max="40" value="10" step="1"></div>
+      <div class="ctl" id="ctlF"><label for="f">Excitation frequency <output id="fOut">2.00 Hz</output></label><input type="range" id="f" min="0.2" max="20" value="2" step="0.05"></div>
+      <div class="ctl" id="ctlSweep"><label class="chk"><input type="checkbox" id="sweep"> Stepped sine 0.2 → 3 f<sub>n</sub>, dwelling at each step until settled, plotting measured points</label></div>
+      <div class="ctl" id="ctlImp"><label for="imp">Impulse <output id="impOut">1.0 N·s</output></label><input type="range" id="imp" min="0.1" max="10" value="1" step="0.1"></div>
+      <div class="ctl-actions">
+        <button class="act" id="btnStart">Start / release</button>
+        <button class="act ghost" id="btnStop">Stop</button>
+        <button class="act ghost" id="btnRecord">Record reading</button>
+        <button class="act ghost" id="btnClearM">Clear measured points</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="decay">Free decay</button>
+          <button class="mini" data-preset="critical">Critical damping</button>
+          <button class="mini" data-preset="over">Overdamped</button>
+          <button class="mini" data-preset="res">Resonance</button>
+          <button class="mini" data-preset="sweep">Sweep the FRF</button>
+          <button class="mini" data-preset="iso">Isolation r = 3</button>
+          <button class="mini" data-preset="car">Car on a wavy road</button>
+          <button class="mini" data-preset="step">Step</button>
+          <button class="mini" data-preset="hammer">Hammer tap</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2>Time traces · last 10 s</h2><span class="legend"><i class="sw water"></i>displacement x <i class="sw brass"></i>base y / force F <i class="sw taps"></i>envelope</span></div>
+      <canvas id="trace" width="900" height="250" aria-label="Displacement, base motion and force against time"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Frequency response · magnification and transmissibility against r = f / f<sub>n</sub></h2><span class="legend"><i class="sw water"></i>X·k/F₀ (force) <i class="sw good"></i>X/Y transmissibility (base) <i class="sw brass"></i>phase <i class="sw taps"></i>measured</span></div>
+      <canvas id="frf" width="900" height="300" aria-label="Frequency response curves with the current operating point and measured points"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Phase portrait · velocity against displacement</h2></div>
+      <canvas id="phase" width="900" height="210" aria-label="Phase portrait"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Each reading stores the system, the excitation, the theory values and what was measured from the trace.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="mass-spring-damper.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Tag</th><th>Mode</th><th>m kg</th><th>k N/m</th><th>c</th><th>ζ</th><th>fn Hz</th><th>f Hz</th><th>r</th><th>F₀/Y</th><th>Amp mm</th><th>Meas f Hz</th><th>Meas δ</th><th>Meas ζ</th><th>Ratio theory</th><th>Ratio meas</th><th>Phase°</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>The equation</h3><p class="eq">m ẍ + c ẋ + k x = F(t) &nbsp;·&nbsp; ω<sub>n</sub> = √(k/m) &nbsp;·&nbsp; ζ = c / 2√(km) &nbsp;·&nbsp; ω<sub>d</sub> = ω<sub>n</sub>√(1 − ζ²)</p><p>Everything on this bench comes from one second-order equation, integrated numerically in real time. Mass sets the inertia, the spring stores energy, the damper drains it. Stiffer or lighter means faster; more damping means the free motion dies sooner and the resonance peak is lower.</p></article>
+      <article><h3>Free vibration</h3><p class="eq">x = X e<sup>−ζω<sub>n</sub>t</sup> cos(ω<sub>d</sub>t − φ) &nbsp;·&nbsp; δ = ln(x<sub>n</sub>/x<sub>n+1</sub>) = 2πζ/√(1 − ζ²)</p><p>Release the mass and count peaks: the period gives f<sub>d</sub>, the ratio of successive peaks gives the logarithmic decrement and hence ζ. Critical damping (ζ = 1) returns to rest fastest without overshoot; overdamped creeps back.</p></article>
+      <article><h3>Harmonic force</h3><p class="eq">X k / F₀ = 1 / √((1 − r²)² + (2ζr)²) &nbsp;·&nbsp; tan φ = 2ζr / (1 − r²)</p><p>Below resonance the spring carries the force and the mass follows in phase. At r = 1 the peak is 1/2ζ and the response lags by 90°. Above resonance inertia dominates, the amplitude falls toward zero and the phase goes to 180°.</p></article>
+      <article><h3>Base excitation and isolation</h3><p class="eq">X / Y = √(1 + (2ζr)²) / √((1 − r²)² + (2ζr)²)</p><p>The same curve gives the force transmitted to a foundation by a machine on springs. Transmissibility is below 1 only for r &gt; √2, so an isolator must be soft enough that its natural frequency sits well below the excitation. Above √2 extra damping makes isolation worse, not better.</p></article>
+      <article><h3>Sweeping</h3><p>The stepped sine holds each frequency until the transient has died (about four time constants) and records the settled amplitude ratio, so the measured points can be compared with the theoretical curve. The half-power bandwidth around the peak gives ζ ≈ Δf / 2f<sub>n</sub>.</p></article>
+      <article><h3>About the rig</h3><p>[Illustrative data, for training only.] Mass plates 0.5–20 kg, spring 50–5 000 N/m, damper 0–400 N·s/m, travel ±120 mm to the stops (restitution 0.5 on impact), shaker base ±40 mm, force actuator ±100 N. Integration: fourth-order Runge–Kutta at 2 400 steps per second.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the demonstrator</h2>
+    <ul>
+      <li><b>Set the system</b>: mass, spring, damper (or pick ζ directly). The readouts give f<sub>n</sub>, ζ, f<sub>d</sub>, time constant and log decrement.</li>
+      <li><b>Choose the excitation</b>: release from a displacement, drive with a harmonic force, shake the base, apply a step, or tap it with an impulse. Press Start.</li>
+      <li><b>Read the traces</b>: the envelope and zero crossings give the measured frequency and decrement; the frequency-response chart shows where you are on the curve and the sweep plots measured points over it.</li>
+      <li><b>Slow the clock</b> to watch fast systems; <b>Record</b> readings to compare cases in the tasks.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>Space</kbd> start / stop · <kbd>R</kbd> record · <kbd>1</kbd>–<kbd>5</kbd> excitation mode · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

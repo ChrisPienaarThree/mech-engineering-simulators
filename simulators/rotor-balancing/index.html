@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rotor Balancing and Critical Speed Rig</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 23</span>
+    <h1>Rotor Balancing and Critical Speed Rig</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Running</span>
+    <span class="pill ok" id="pillState">—</span>
+    <span class="pill" id="pillMode">—</span>
+    <span class="pill warn hidden" id="pillTrip">VIBRATION TRIP</span>
+    <span class="pill amber hidden" id="pillTrial">Trial mass fitted</span>
+    <span class="pill ok hidden" id="pillCorr">Correction mass fitted</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Rotor between two bearings with a proximity probe">
+    <div class="rig-head">
+      <h2 id="rigTitle">Jeffcott rotor · disc on a flexible shaft between two bearings, driven through the critical</h2>
+      <span class="legend"><i class="sw taps"></i>heavy spot <i class="sw ink"></i>high spot / probe <i class="sw water"></i>orbit</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="readouts">
+      <div class="ro"><span class="k">Speed</span><span class="v" id="roN">—</span><span class="u">rpm · critical <span id="roNcr">—</span> · ratio <span id="roRr">—</span></span></div>
+      <div class="ro" id="roAmpBox"><span class="k">Vibration</span><span class="v" id="roAmp">—</span><span class="u">µm peak · <span id="roVel">—</span> mm/s · phase lag <span id="roPh">—</span>°</span></div>
+      <div class="ro"><span class="k">Stiffness</span><span class="v" id="roK">—</span><span class="u">MN/m combined · shaft <span id="roKsh">—</span> · rigid-support critical <span id="roNcrR">—</span> rpm</span></div>
+      <div class="ro"><span class="k">Residual unbalance</span><span class="v" id="roU">—</span><span class="u">g·mm · eccentricity <span id="roE">—</span> µm</span></div>
+      <div class="ro" id="roGBox"><span class="k">Balance grade at service speed</span><span class="v" id="roG">—</span><span class="u">mm/s · <span id="roGrade">—</span> · peak amplification <span id="roAmpl">—</span>×</span></div>
+      <div class="ro"><span class="k">Original reading O</span><span class="v" id="roO">—</span><span class="u">at the balancing speed</span></div>
+      <div class="ro"><span class="k">Trial reading O + T</span><span class="v" id="roT">—</span><span class="u">with the trial mass fitted</span></div>
+      <div class="ro"><span class="k">Computed correction</span><span class="v" id="roCorr">—</span><span class="u" id="roCorrNote">needs original and trial readings</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="grp-title">Rotor</div>
+      <div class="ctl"><label for="m">Disc mass <output id="mOut">40 kg</output></label><input type="range" id="m" min="5" max="200" value="40" step="5"></div>
+      <div class="ctl"><label for="dsh">Shaft diameter <output id="dshOut">50 mm</output></label><input type="range" id="dsh" min="20" max="120" value="50" step="2"></div>
+      <div class="ctl"><label for="L">Bearing span <output id="LOut">1.20 m</output></label><input type="range" id="L" min="0.4" max="3" value="1.2" step="0.05"></div>
+      <div class="ctl"><label for="pos">Disc position <output id="posOut">50 % of span</output></label><input type="range" id="pos" min="0.15" max="0.85" value="0.5" step="0.05"></div>
+      <div class="ctl"><label for="kb">Bearing / support stiffness <output id="kbOut">50 MN/m each</output></label><input type="range" id="kb" min="2000000" max="200000000" value="50000000" step="1000000"></div>
+      <div class="ctl"><label for="zeta">Damping ratio ζ <output id="zetaOut">0.050</output></label><input type="range" id="zeta" min="0.01" max="0.3" value="0.05" step="0.005"></div>
+      <div class="grp-title">Drive</div>
+      <div class="ctl"><label for="nset">Speed setpoint <output id="nsetOut">1200 rpm</output></label><input type="range" id="nset" min="0" max="6000" value="1200" step="50"></div>
+      <div class="ctl"><label for="ramp">Ramp rate <output id="rampOut">200 rpm/s</output></label><input type="range" id="ramp" min="50" max="2000" value="200" step="50"></div>
+      <div class="ctl"><label for="limit">Vibration trip limit <output id="limitOut">100 µm</output></label><input type="range" id="limit" min="20" max="500" value="100" step="10"></div>
+      <div class="grp-title">Balancing masses</div>
+      <div class="ctl"><label for="mTrial">Trial mass <output id="mTrialOut">20 g</output></label><input type="range" id="mTrial" min="1" max="100" value="20" step="1"></div>
+      <div class="ctl"><label for="aTrial">Trial mass angle <output id="aTrialOut">90°</output></label><input type="range" id="aTrial" min="0" max="359" value="90" step="1"></div>
+      <div class="ctl"><label for="rTrial">Trial mass radius <output id="rTrialOut">150 mm</output></label><input type="range" id="rTrial" min="50" max="400" value="150" step="10"></div>
+      <div class="ctl"><label for="mCorr">Correction mass <output id="mCorrOut">0.0 g</output></label><input type="range" id="mCorr" min="0" max="100" value="0" step="0.5"></div>
+      <div class="ctl"><label for="aCorr">Correction angle <output id="aCorrOut">0°</output></label><input type="range" id="aCorr" min="0" max="359" value="0" step="1"></div>
+      <div class="ctl"><label for="rCorr">Correction radius <output id="rCorrOut">150 mm</output></label><input type="range" id="rCorr" min="50" max="400" value="150" step="10"></div>
+      <div class="ctl-actions">
+        <button class="act" id="btnRun">Running</button>
+        <button class="act ghost" id="btnStop">Pause</button>
+        <button class="act ghost" id="btnSweep">Run-up sweep</button>
+        <button class="act ghost" id="btnReset">Reset trip</button>
+        <button class="act ghost" id="btnOrig">Take original reading</button>
+        <button class="act ghost" id="btnTrial">Fit trial mass</button>
+        <button class="act ghost" id="btnTrialRead">Take trial reading</button>
+        <button class="act ghost" id="btnUseCalc">Use computed correction</button>
+        <button class="act ghost" id="btnCorr">Fit correction mass</button>
+        <button class="act ghost" id="btnNew">New unknown unbalance</button>
+        <button class="act ghost" id="btnRecord">Record reading</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="sweep">Run-up through the critical</button>
+          <button class="mini" data-preset="fast">Fast ramp, high trip limit</button>
+          <button class="mini" data-preset="damped">Damping 0.2</button>
+          <button class="mini" data-preset="soft">Soft supports</button>
+          <button class="mini" data-preset="balance">Balancing job at 1 200 rpm</button>
+          <button class="mini" data-preset="above">Run above the critical</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2>Bode plot · amplitude and phase against speed</h2><span class="legend"><i class="sw water"></i>amplitude <i class="sw good"></i>phase lag <i class="sw brass"></i>this run <i class="sw taps"></i>now / limits</span></div>
+      <canvas id="chart" width="900" height="300" aria-label="Bode plot"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Polar plot · influence-coefficient balancing</h2><span class="legend"><i class="sw water"></i>original O <i class="sw brass"></i>with trial O+T <i class="sw good"></i>effect T <i class="sw taps"></i>now</span></div>
+      <canvas id="chart2" width="900" height="250" aria-label="Polar plot"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2 id="traceTitle">Trend · amplitude and speed</h2></div>
+      <canvas id="trace" width="900" height="180" aria-label="Amplitude trend"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Each reading stores speed, critical speed, amplitude, velocity, phase, damping, rotor data, fitted masses, residual unbalance and balance grade. Original and trial readings and trips are logged automatically.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="rotor-balancing.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Tag</th><th>rpm</th><th>Critical</th><th>Ratio</th><th>µm</th><th>mm/s</th><th>Phase</th><th>ζ</th><th>kg</th><th>Shaft</th><th>Span</th><th>k brg</th><th>Trial</th><th>Correction</th><th>U g·mm</th><th>e µm</th><th>G</th><th>Grade</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>Critical speed</h3><p class="eq">k<sub>shaft</sub> = 3 E I L / (a² b²) &nbsp;·&nbsp; 1/k = 1/k<sub>shaft</sub> + 1/(2 k<sub>bearing</sub>) &nbsp;·&nbsp; ω<sub>n</sub> = √(k/m)</p><p>A disc on a flexible shaft is a mass on a spring. The shaft stiffness depends on its diameter to the fourth power and the span to the third; flexible bearings or pedestals add in series and lower the critical speed. The first critical is where the running speed meets that natural frequency.</p></article>
+      <article><h3>Response to unbalance</h3><p class="eq">r = e (ω/ω<sub>n</sub>)² / √[(1 − (ω/ω<sub>n</sub>)²)² + (2ζ ω/ω<sub>n</sub>)²] &nbsp;·&nbsp; tan φ = 2ζ(ω/ω<sub>n</sub>) / (1 − (ω/ω<sub>n</sub>)²)</p><p>Below the critical the disc whirls with the heavy spot outside (phase near 0°); at the critical the amplitude is limited only by damping (1/2ζ times the eccentricity) and the high spot lags the heavy spot by 90°; well above it the disc turns about its mass centre and the shaft whirls with amplitude equal to the eccentricity, heavy spot inside (180°). Getting through fast, with enough damping, is how supercritical machines start.</p></article>
+      <article><h3>Single-plane balancing</h3><p class="eq">T = (O + T) − O &nbsp;·&nbsp; U<sub>corr</sub> = −O · U<sub>trial</sub> / T</p><p>The original vibration vector O is caused by the unknown unbalance. A known trial mass changes it to O + T; the difference T is the response to the trial mass alone and gives the influence coefficient (vibration per unit unbalance, with its phase). The correction is the unbalance that would produce −O. It only works if the trial mass changes the reading enough (30 % in amplitude or 30° in phase) and both readings are at the same speed.</p></article>
+      <article><h3>Balance grade</h3><p class="eq">G = e<sub>per</sub> · ω &nbsp;(mm/s) &nbsp;·&nbsp; e = U / m</p><p>ISO 21940 grades express permissible residual unbalance as the velocity of the mass centre: G6.3 for general machinery, G2.5 for turbines and pumps, G1 for precision spindles. At higher speed the same eccentricity gives a worse grade, so fast rotors must be balanced finer.</p></article>
+      <article><h3>About the numbers</h3><p>[Illustrative data, for training only.] A single-mass Jeffcott rotor with viscous damping and identical isotropic bearings; the probe reads the disc displacement; no gyroscopic effects, no second mode, no bearing anisotropy. The unknown unbalance is generated at random for each balancing job.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the rig</h2>
+    <ul>
+      <li><b>Rotor</b>: set disc mass, shaft diameter, span, disc position, bearing stiffness and damping. The critical speed updates at once.</li>
+      <li><b>Run-up sweep</b> drives the speed up through the critical and back; watch the Bode plot fill, the orbit grow and the phase swing. The trip limit stops the drive if the vibration is too high.</li>
+      <li><b>Balancing job</b>: at a speed well below the critical take the original reading, fit the trial mass, take the trial reading, use the computed correction (or compute your own from the polar plot), fit it and check the residual.</li>
+      <li><b>Record</b> readings to compare damping, supports and speeds in the tasks.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>Space</kbd> run / pause · <kbd>S</kbd> sweep · <kbd>O</kbd> original reading · <kbd>T</kbd> trial reading · <kbd>R</kbd> record · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

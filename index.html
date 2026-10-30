@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Simulator Launch Centre</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training</span>
+    <h1>Simulator Launch Centre</h1>
+  </div>
+  <nav class="views" id="views">
+    <button class="vbtn on" data-view="launch">Launch</button>
+    <button class="vbtn" data-view="run">Run a simulator</button>
+    <button class="vbtn" data-view="split">Side by side</button>
+    <button class="vbtn" data-view="session">Session plan</button>
+  </nav>
+  <div class="tools">
+    <span class="pill" id="pillProgress">0 tasks done</span>
+    <button class="tbtn" id="btnTheme">Theme</button>
+    <button class="tbtn" id="btnFull">Fullscreen</button>
+  </div>
+</header>
+
+<main>
+  <!-- ---------------- launch ---------------- -->
+  <section class="view on" id="view-launch">
+    <p class="lead">Every simulator below is a standalone, offline page. Open one in its own tab for a classroom projector, or run it here with live readouts and presets in the side panel. Progress on each simulator's learning tasks is tracked on this device.</p>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <!-- ---------------- run ---------------- -->
+  <section class="view" id="view-run">
+    <div class="runbar">
+      <label>Simulator <select id="runSel"></select></label>
+      <span class="status" id="runStatus">—</span>
+      <span class="btns"><button class="mini" id="runOpenTab">Open in new tab</button><button class="mini" id="runReload">Reload</button></span>
+    </div>
+    <div class="runwrap">
+      <iframe id="runFrame" title="Simulator" allow="autoplay"></iframe>
+      <aside class="side">
+        <h3>Live readouts</h3>
+        <div class="live" id="runLive"><span class="muted">Waiting for the simulator…</span></div>
+        <h3>Presets</h3>
+        <div class="presets" id="runPresets"></div>
+        <h3>Learning tasks</h3>
+        <ul class="tasklist" id="runTasks"></ul>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ---------------- split ---------------- -->
+  <section class="view" id="view-split">
+    <div class="runbar">
+      <label>Left <select id="splitA"></select></label>
+      <label>Right <select id="splitB"></select></label>
+      <span class="muted">Use this to show cause and effect across rigs — for example, the loop bench operating point beside the cavitation trainer's NPSH margin.</span>
+    </div>
+    <div class="splitwrap">
+      <iframe id="frameA" title="Left simulator" allow="autoplay"></iframe>
+      <iframe id="frameB" title="Right simulator" allow="autoplay"></iframe>
+    </div>
+  </section>
+
+  <!-- ---------------- session ---------------- -->
+  <section class="view" id="view-session">
+    <div class="session">
+      <article class="panel">
+        <h2>Suggested classroom sequence</h2>
+        <p class="muted">A half-day fluids and rotating-machinery block built on the simulators. Times are indicative; each simulator's Learning tasks tab carries the auto-checked exercises.</p>
+        <ol class="plan" id="plan"></ol>
+      </article>
+      <article class="panel">
+        <h2>Progress on this device</h2>
+        <div id="progress"></div>
+        <p class="muted small">Progress is read from each simulator while it runs here, and remembered in this browser only. Clear it before a new cohort.</p>
+        <button class="mini" id="btnClearProgress">Clear progress</button>
+      </article>
+      <article class="panel">
+        <h2>Adding the next simulator</h2>
+        <p>Create a folder under <code>simulators/</code> with <code>index.html</code>, <code>app.js</code> and <code>styles.css</code>, expose <code>window.&lt;Name&gt;.getState()</code> / <code>setState()</code>, answer the <code>sim:get</code> and <code>sim:set</code> messages, and add an entry to <code>simulators/manifest.js</code>. It will appear here automatically with its presets and task tracking.</p>
+      </article>
+    </div>
+  </section>
+</main>
+
+<footer><span>Mechanical engineering training simulators · offline · all rig data illustrative</span><span id="count"></span></footer>
+</div>
+<script src="simulators/manifest.js"></script>
+<script src="dashboard.js"></script>
+</body>
+</html>

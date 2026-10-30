@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Operating-Point Board</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 07</span>
+    <h1>Operating-Point Board</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill" id="pillScenario">Card 0</span>
+    <span class="pill" id="pillPieces">0 pieces registered</span>
+    <span class="pill" id="pillScore">0 hits</span>
+    <span class="pill mode hidden" id="pillMode">Projector mode — pieces hidden</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnMode" title="Hide the digital pieces and use the screen only to reveal answers for the magnetic board">Projector mode</button>
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="board-box" aria-label="Magnetic operating-point board, digital version">
+    <div class="rig-head">
+      <h2>H–Q board · same scale as the printed A1 board</h2>
+      <span class="legend"><i class="sw water"></i>speed curve <i class="sw brass"></i>trimmed impeller <i class="sw" style="background:var(--water-deep)"></i>two in parallel <i class="sw brass"></i>system parabola <i class="sw good"></i>POR <i class="sw" style="background:var(--warn)"></i>AOR</span>
+    </div>
+    <svg id="board" viewBox="0 0 841 594" role="img" aria-label="H–Q chart with draggable curve pieces"></svg>
+    <div class="tray" id="tray">
+      <div class="grp" id="trayPumps"><b>Pump curves</b></div>
+      <div class="grp" id="traySystems"><b>System K</b></div>
+      <div class="grp" id="trayBars"><b>POR/AOR bars</b></div>
+      <div class="grp"><b>Markers</b><button data-piece="BEP">BEP dot</button><button data-piece="OP">? predicted OP</button><button data-piece="HS">static-head line</button></div>
+      <div class="grp"><b>Board</b><button id="btnClear">Clear board</button><button id="btnBaseline">Place baseline</button></div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="card">
+      <div class="scsel" id="scsel"></div>
+      <div class="head"><span class="letter" id="scLetter">0</span><div><span class="eyebrow">Scenario card</span><h2 id="scTitle">—</h2></div></div>
+      <p id="scBrief"></p>
+      <p class="ask" id="scAsk"></p>
+      <p class="note" id="scPieces"></p>
+    </div>
+    <div class="card">
+      <div class="teamrow"><label>Team <input type="text" id="team" placeholder="Team name" maxlength="24"></label><button class="act" id="btnCheck">Check prediction</button><button class="act ghost" id="btnReveal">Reveal answer</button><button class="act ghost" id="btnHide">Hide answer</button></div>
+      <div class="pred">
+        <div class="ro"><span class="k">Predicted Q</span><span class="v" id="pQ">—</span><span class="u">m³/h · drag the ? marker</span></div>
+        <div class="ro"><span class="k">Predicted H</span><span class="v" id="pH">—</span><span class="u">m</span></div>
+        <div class="ro"><span class="k">System piece</span><span class="v" id="pSys">—</span><span class="u">K · static head</span></div>
+        <div class="ro"><span class="k">Pump piece</span><span class="v" id="pPump">—</span><span class="u">registered to the grid</span></div>
+      </div>
+      <div class="verdict" id="verdict">Set up the board for the card, drag the red ? marker to where the curves cross, then press Check.</div>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Results <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="print" role="tab">Physical board</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Every Check records the team's prediction against the true intersection. Hit = within 1.5 m³/h and 1.5 m.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="operating-point-board-results.csv" href="#">Download CSV</a><button class="mini" id="btnClearLog">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Team</th><th>Card</th><th>Pump</th><th>System</th><th>Pred Q</th><th>Pred H</th><th>True Q</th><th>True H</th><th>ΔQ</th><th>ΔH</th><th>Verdict</th><th>η %</th><th>kW</th><th>% BEP</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-print">
+    <div class="theory">
+      <article><h3>Print set</h3><p>The <code>print/</code> folder next to this page holds the physical board, generated from the same model file: <b>board-A1</b> (the chart, 841 × 594 mm), <b>pieces-A1</b> sheets (pump, speed, impeller and parallel curves, system parabolas — all at the board's scale), <b>pieces-small-A3</b> (POR/AOR bars, BEP dots, ? and ✓ markers, static-head lines), <b>scenario-cards</b> (A5, two per A4), <b>facilitator-key</b> and <b>team-record</b>. PDF and SVG versions of each.</p></article>
+      <article><h3>Making it</h3><p>Print everything at 100 %. Mount the board on a steel sheet or a magnetic whiteboard. Laminate the piece sheets, cut on the black outline, and run magnetic tape along the back of each strip. Each pump piece carries its Q = 0 end and white ticks at Q = 10, 20, 30 for registration; each system piece is a parabola relative to the static head, so its lower end sits on the H = H<sub>s</sub> grid line.</p></article>
+      <article><h3>Running it</h3><p>Card 0 commissions the board, then A to D one at a time, E and F for fast teams. Teams register the pieces, mark the BEP, lay the POR/AOR bar, place the red ? where the curves cross and write down Q, H, % BEP, POR yes/no, η and kW. Then verify here (Projector mode hides the digital pieces so the screen only reveals the answer) or on the hydraulic loop bench.</p></article>
+    </div>
+  </div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>Why the pieces move the way they do</h3><p>The pump curve belongs to the machine: speed and impeller diameter scale it by the affinity laws, nothing else moves it. The system curve belongs to the plant: static head sets where it starts and friction sets how steeply it climbs. The pump runs where the two meet, and only there.</p><p class="eq">Q ∝ N·D &nbsp;·&nbsp; H ∝ (N·D)² &nbsp;·&nbsp; P ∝ (N·D)³ &nbsp;·&nbsp; H<sub>sys</sub> = H<sub>s</sub> + K·Q²</p></article>
+      <article><h3>Strainer, tank, valve, speed</h3><p>A fouling strainer and a closing valve both raise K: the parabola steepens, the point slides up and left along the pump curve. A falling supply tank raises the static head: the parabola moves up unchanged, same direction of travel, usually a bigger loss of flow. A VFD shrinks the pump curve instead: the point moves down and left along the <i>system</i> curve, which is why the head falls with the flow and the power drops so much further than with the valve.</p></article>
+      <article><h3>POR and AOR</h3><p>The preferred operating region (70–120 % of Q<sub>BEP</sub>, ANSI/HI 9.6.3) is where vibration, bearing loads and recirculation stay low; the allowable region is wider and set by the manufacturer (50–130 % here, illustrative). Both scale with speed and diameter because Q<sub>BEP</sub> does — which is why every pump piece has its own bar.</p></article>
+      <article><h3>Two pumps in parallel</h3><p>Add flows at equal head. On a steep system the combined curve meets the parabola not far to the right of the single-pump point, so each pump backs off to the left of its POR. Parallel pumping pays on flat, friction-light systems.</p></article>
+      <article><h3>Power</h3><p class="eq">P = ρ g Q H / η &nbsp;(Q in m³/s)</p><p>Throttling to 18 m³/h leaves the pump making 25 m of head to deliver 16.5 m of useful work; the valve destroys the rest. The VFD at 1 200 rpm delivers about the same flow at 15.6 m for close to half the power.</p></article>
+      <article><h3>About the data</h3><p>[Illustrative pump and system data, for training only.] The pump is the same fictional 4 kW unit used on the hydraulic loop bench and the pump trainer: H = 32 − 0.2Q − 0.01Q² at 1 480 rpm, BEP 24 m³/h, η 72 %. Baseline system: static head 10 m, K = 0.020 (pipe 0.015 + clean strainer 0.005).</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the board</h2>
+    <ul>
+      <li><b>Pick a scenario card</b> on the right. It says which pieces you need; those buttons in the tray are outlined in brass.</li>
+      <li><b>Add pieces</b> from the tray and <b>drag</b> them onto the chart. Pump curves and bars snap when you register them to the grid (Q = 0 end, white ticks). System parabolas snap to Q = 0 and slide up and down: their lower end sits on the static head.</li>
+      <li><b>Predict</b>: drag the red ? marker to where the curves cross. Its Q and H show on the right. Press <b>Check</b>: the true curves and the true point appear and the result is logged for the team.</li>
+      <li><b>Projector mode</b> hides the digital pieces so the screen only reveals the answer for teams working on the magnetic board.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>0</kbd> <kbd>A</kbd>–<kbd>F</kbd> scenario · <kbd>Enter</kbd> check · <kbd>R</kbd> reveal · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="model.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

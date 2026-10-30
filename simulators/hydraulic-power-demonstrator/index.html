@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hydraulic Power Demonstrator</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 08</span>
+    <h1>Hydraulic Power Demonstrator</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Pump stopped</span>
+    <span class="pill" id="pillState">—</span>
+    <span class="pill amber hidden" id="pillRelief">Relief valve open</span>
+    <span class="pill warn hidden" id="pillIntens">Rod-side intensification</span>
+    <span class="pill warn hidden" id="pillCav">Overrunning load — cavitation</span>
+    <span class="pill warn hidden" id="pillOver">Motor overload</span>
+    <span class="pill amber hidden" id="pillHot">Oil hot</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Hydraulic power pack, valves and vertical cylinder with load">
+    <div class="rig-head">
+      <h2>Power pack and cylinder</h2>
+      <span class="legend"><i class="sw brass"></i>oil flow <i class="sw taps"></i>at relief pressure <i class="sw water"></i>cap side <i class="sw" style="background:var(--water-deep)"></i>rod side</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="readouts">
+      <div class="ro"><span class="k">P1 pump</span><span class="v" id="roP1">—</span><span class="u">bar</span></div>
+      <div class="ro"><span class="k">P2 cap side</span><span class="v" id="roP2">—</span><span class="u">bar</span></div>
+      <div class="ro" id="roP3box"><span class="k">P3 rod side</span><span class="v" id="roP3">—</span><span class="u">bar</span></div>
+      <div class="ro"><span class="k">Force at rod (load cell)</span><span class="v" id="roF">—</span><span class="u">kN · p·A = <span id="roFpa">—</span> kN</span></div>
+      <div class="ro"><span class="k">Rod speed</span><span class="v" id="roV">—</span><span class="u">mm/s · position <span id="roX">—</span> mm</span></div>
+      <div class="ro"><span class="k">Areas</span><span class="v" id="roA">—</span><span class="u">cm² cap · rod side <span id="roA2">—</span> cm²</span></div>
+      <div class="ro"><span class="k">Pump flow</span><span class="v" id="roQ">—</span><span class="u">L/min · to cylinder <span id="roQc">—</span> · over relief <span id="roQr">—</span></span></div>
+      <div class="ro" id="roPbox"><span class="k">Motor power</span><span class="v" id="roPm">—</span><span class="u">kW of 4 · useful <span id="roPu">—</span> kW</span></div>
+      <div class="ro" id="roWbox"><span class="k">Wasted as heat</span><span class="v" id="roPw">—</span><span class="u">kW</span></div>
+      <div class="ro" id="roTbox"><span class="k">Oil temperature</span><span class="v" id="roT">—</span><span class="u">°C · thermal clock ×10</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="ctl"><label>Cylinder bore <select id="bore"><option value="25">25 mm</option><option value="32">32 mm</option><option value="40">40 mm</option><option value="50" selected>50 mm</option><option value="63">63 mm</option><option value="80">80 mm</option></select></label></div>
+      <div class="ctl"><label>Piston rod <select id="rod"></select></label></div>
+      <div class="ctl"><label>Load on the platform <select id="loadType"><option value="weight">Dead weight (mass)</option><option value="spring">Spring (force grows with stroke)</option><option value="brake">Friction brake (constant, both ways)</option><option value="none">No load (platform only)</option></select></label></div>
+      <div class="ctl"><label for="loadVal"><span id="loadName">Mass</span> <output id="loadValOut">1 000 kg</output></label><input type="range" id="loadVal" min="0" max="3000" value="1000" step="50"></div>
+      <div class="ctl"><label for="relief">Relief valve setting <output id="reliefOut">150 bar</output></label><input type="range" id="relief" min="20" max="250" value="150" step="5"></div>
+      <div class="ctl"><label for="rpm">Pump speed (VSD) <output id="rpmOut">1 450 rpm</output></label><input type="range" id="rpm" min="300" max="1800" value="1450" step="10"></div>
+      <div class="ctl"><label for="mIn">Meter-in valve (supply) <output id="mInOut">100 %</output></label><input type="range" id="mIn" min="0" max="100" value="100" step="1"></div>
+      <div class="ctl"><label for="mOut">Meter-out valve (return) <output id="mOutOut">100 %</output></label><input type="range" id="mOut" min="0" max="100" value="100" step="1"></div>
+      <div class="ctl"><label class="chk"><input type="checkbox" id="closedCentre"> Closed-centre directional valve (pump dead-headed in neutral)</label></div>
+      <div class="dcv"><label>Directional valve</label><div class="seg" id="dcvSeg"><button class="ret" data-dcv="retract">▼ Retract</button><button class="on" data-dcv="neutral">Neutral</button><button class="ext" data-dcv="extend">▲ Extend</button></div><span class="note">Hold ▲ / ▼ keys, or click.</span></div>
+      <div class="ctl-actions">
+        <button class="act" id="btnStart">Start pump</button>
+        <button class="act ghost" id="btnStop">Stop pump</button>
+        <button class="act ghost hidden" id="btnReset">Reset trip / repair</button>
+        <button class="act ghost" id="btnRecord">Record reading</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="small">Small bore, fast</button>
+          <button class="mini" data-preset="big">Big bore, strong</button>
+          <button class="mini" data-preset="stall">Stall test (brake)</button>
+          <button class="mini" data-preset="lift">Lift 2 000 kg</button>
+          <button class="mini" data-preset="intens">Meter-out closed</button>
+          <button class="mini" data-preset="waste">Wasteful meter-in</button>
+          <button class="mini" data-preset="overrun">Overrunning load</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2>Force and speed against bore · at the current relief setting and pump flow</h2><span class="legend"><i class="sw water"></i>force extending (p·A<sub>cap</sub>) <i class="sw" style="background:var(--water-deep)"></i>force retracting (p·A<sub>rod side</sub>) <i class="sw brass"></i>speed extending <i class="sw good"></i>speed retracting</span></div>
+      <canvas id="tradeoff" width="900" height="300" aria-label="Force and speed for each cylinder bore"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Traces · last 40 s</h2><span class="legend"><i class="sw brass"></i>P1 pump <i class="sw water"></i>P2 cap <i class="sw" style="background:var(--water-deep)"></i>P3 rod <i class="sw taps"></i>force <i class="sw good"></i>position <i class="sw" style="background:var(--warn)"></i>wasted power</span></div>
+      <canvas id="trace" width="900" height="280" aria-label="Pressure, force, position and power traces"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Each reading stores the cylinder, the load, the pressures, the load-cell force, p·A, the speed and the powers. Automatic rows are added for stalls and trips.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="hydraulic-power.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Tag</th><th>Bore</th><th>Rod</th><th>A cap cm²</th><th>A rod cm²</th><th>Valve</th><th>Load</th><th>Relief</th><th>P1</th><th>P2</th><th>P3</th><th>F kN</th><th>p·A kN</th><th>v mm/s</th><th>Q cyl</th><th>Motor kW</th><th>Waste kW</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>Force is pressure times area</h3><p class="eq">F = p · A &nbsp;·&nbsp; A<sub>cap</sub> = πD²/4 &nbsp;·&nbsp; A<sub>rod side</sub> = π(D² − d²)/4</p><p>The pump does not make force; it makes flow. The relief valve sets the maximum pressure, and the piston area turns that pressure into force. Double the bore and the force goes up four times at the same pressure. The load cell on the rod reads what the load actually feels: the pressure force less seal friction, or, when stalled, whatever the relief setting allows.</p></article>
+      <article><h3>Speed is flow divided by area</h3><p class="eq">v = Q / A &nbsp;·&nbsp; P<sub>hydraulic</sub> = p · Q &nbsp;(bar · L/min / 600 = kW)</p><p>The same flow that moves a 25 mm piston at a third of a metre per second crawls an 80 mm piston at a thirtieth. Force and speed trade against each other at constant power: the trade-off chart shows both for every bore in the rack.</p></article>
+      <article><h3>The rod side</h3><p>Retracting, the pressure acts on the annulus, so the force is lower and the speed higher by the ratio A<sub>cap</sub>/A<sub>rod side</sub>. Block the rod-side return while extending and the cap-side pressure is multiplied by that same ratio on the rod side: a 50/28 cylinder at 150 bar can see 220 bar on its rod seal. That is pressure intensification, and it is why a meter-out valve must never be fully closed on a pressurised cylinder.</p></article>
+      <article><h3>Where the power goes</h3><p>Motor power is pump pressure times pump flow. Useful power is load force times rod speed. Everything in between is heat: flow over the relief valve at full pressure, the drop across a meter-in valve, the drop across a meter-out valve. Throttling a fixed-displacement pump to half speed wastes more than half the motor power in the oil, and the tank shows it (thermal clock ×10 here so the rise is visible in minutes).</p></article>
+      <article><h3>Overrunning loads</h3><p>Lowering a weight, the load drives the cylinder faster than the pump can fill the cap side unless the meter-out valve holds it back. When it runs away the cap side voids and the pressure gauge drops to zero: cavitation, followed by a bang when the void collapses.</p></article>
+      <article><h3>About the rig data</h3><p>[Illustrative data, for training only.] 4 kW power pack, 8 cm³/rev gear pump on a variable-speed motor (10.7 L/min at 1 450 rpm), relief 20–250 bar, tandem-centre or closed-centre 4/3 valve, needle valves meter-in and meter-out, 30 L tank. Cylinder rack: bores 25–80 mm with standard rods, 300 mm stroke, rated 250 bar, rod-seal limit 320 bar. Seal friction 3 % plus 150 N. Return-line back-pressure 1.5 bar.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the demonstrator</h2>
+    <ul>
+      <li><b>Pick a cylinder</b> from the rack (bore and rod). The drawing scales with it and the piston-face inset shows the two areas.</li>
+      <li><b>Start the pump</b>, set the relief valve, and hold <b>Extend</b> or <b>Retract</b>. Read P1 on the pack, P2 and P3 at the ports, and the force at the rod on the load cell. Compare it with p·A.</li>
+      <li><b>Change the load</b>: a dead weight, a spring that stiffens with stroke, or a brake that never yields. Stall the cylinder and watch the pressure sit at the relief setting.</li>
+      <li><b>Valves</b>: meter-in wastes power at the relief valve; meter-out controls overrunning loads but intensifies rod-side pressure when closed.</li>
+      <li><b>Record</b> readings at several bores and let the tasks check them.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>↑</kbd> hold to extend · <kbd>↓</kbd> hold to retract · <kbd>S</kbd> start / stop pump · <kbd>R</kbd> record · <kbd>1</kbd>–<kbd>6</kbd> bore · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pump Trainer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 03</span>
+    <h1>Instrumented Pump Trainer</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Pumps stopped</span>
+    <span class="pill" id="pillPoint">—</span>
+    <span class="pill warn hidden" id="pillCav">Cavitation</span>
+    <span class="pill warn hidden" id="pillOver">Motor overload</span>
+    <span class="pill warn hidden" id="pillBrg">Bearing hot</span>
+    <span class="pill warn hidden" id="pillVib">High vibration</span>
+    <span class="pill amber hidden" id="pillFluid">Fluid heating</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnAccel" title="Run the thermal clock 20× faster">Thermal ×1</button>
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Closed-loop instrumented pump trainer">
+    <div class="rig-head">
+      <h2>Closed loop · two transparent pumps</h2>
+      <div class="seg" id="arrSeg"><button data-arr="single" class="on">Single (P1)</button><button data-arr="parallel">Parallel</button><button data-arr="series">Series</button></div>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+    <div class="instr" id="instr"></div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head">
+        <h2>Curve builder</h2>
+        <span class="legend" id="chartLegend"></span>
+      </div>
+      <canvas id="chart" width="900" height="500" aria-label="Head against flow with recorded points"></canvas>
+      <div class="chart-foot">
+        <label class="chk"><input type="checkbox" id="showModel"> Reveal model curves (pump, system, affinity, series/parallel)</label>
+        <label class="chk"><input type="checkbox" id="showEta" checked> Plot efficiency of recorded points (right axis)</label>
+        <label class="chk">Colour points by <select id="colourBy"><option value="speed">speed</option><option value="arr">arrangement</option><option value="dthr">discharge throttle</option></select></label>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="ctl">
+        <label for="n1">P1 speed <output id="n1Out">0 %</output></label>
+        <input type="range" id="n1" min="0" max="100" value="0" step="1">
+        <div class="ctl-foot"><span id="rpm1Out">0 rpm</span><span class="btns"><button class="mini" data-n1="0">Stop</button><button class="mini" data-n1="60">60 %</button><button class="mini" data-n1="80">80 %</button><button class="mini" data-n1="100">100 %</button></span></div>
+      </div>
+      <div class="ctl">
+        <label for="n2">P2 speed <output id="n2Out">0 %</output></label>
+        <input type="range" id="n2" min="0" max="100" value="0" step="1">
+        <div class="ctl-foot"><span id="rpm2Out">0 rpm</span><span class="btns"><button class="mini" data-n2="0">Stop</button><button class="mini" data-n2="80">80 %</button><button class="mini" data-n2="100">100 %</button><button class="mini" id="btnMatch">Match P1</button></span></div>
+      </div>
+      <div class="ctl">
+        <label for="dthr">Discharge throttle <output id="dthrOut">60 %</output></label>
+        <input type="range" id="dthr" min="0" max="100" value="60" step="1">
+        <div class="ctl-foot"><span>Sets the system curve for a test</span><span class="btns"><button class="mini" data-dthr="100">Open</button><button class="mini" data-dthr="60">60 %</button><button class="mini" data-dthr="30">30 %</button><button class="mini" data-dthr="0">Shut</button></span></div>
+      </div>
+      <div class="ctl">
+        <label for="sthr">Suction throttle <output id="sthrOut">100 %</output></label>
+        <input type="range" id="sthr" min="8" max="100" value="100" step="1">
+        <div class="ctl-foot"><span>Only for NPSH experiments — keep open for curve work</span></div>
+      </div>
+      <div class="ctl two">
+        <div>
+          <label for="level">Tank level above pump eye <output id="levelOut">1.0 m</output></label>
+          <input type="range" id="level" min="-2" max="2" value="1.0" step="0.1">
+        </div>
+        <div>
+          <label for="strainer">Suction restriction (strainer fouling) <output id="strainerOut">0 %</output></label>
+          <input type="range" id="strainer" min="0" max="100" value="0" step="1">
+        </div>
+      </div>
+      <div class="ctl two">
+        <div>
+          <label for="fluid">Fluid <select id="fluid"><option value="water">Water</option><option value="glycol">30 % glycol</option></select></label>
+          <span class="ctl-foot"><span>Fluid temperature rises in a closed loop — watch it.</span></span>
+        </div>
+        <div class="ctl-actions">
+          <button class="act" id="btnRecord">Record point</button>
+          <button class="act" id="btnSweep">Sweep discharge throttle</button>
+          <button class="act ghost" id="btnReset">Reset rig</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="data" role="tab">Instrument readouts</button>
+    <button class="tab" data-tab="log" role="tab">Test log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Curve-construction tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+
+  <div class="tabpanel on" id="tab-data"><div class="grid-data" id="dataGrid"></div></div>
+
+  <div class="tabpanel" id="tab-log">
+    <div class="log-tools">
+      <span>Every recorded point carries the settings and every instrument reading, plus the derived head, hydraulic power and efficiencies — enough to plot any curve by hand.</span>
+      <span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="pump-trainer-log.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span>
+    </div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Arr.</th><th>n1 %</th><th>n2 %</th><th>Dthr %</th><th>Sthr %</th><th>Q m³/h</th><th>Ps kPa</th><th>Pd kPa</th><th>H m</th><th>rpm</th><th>I A</th><th>P kW</th><th>P hyd kW</th><th>η pump %</th><th>η overall %</th><th>Vib mm/s</th><th>Brg °C</th><th>Fluid °C</th></tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>Head from the two pressure gauges</h3><p class="eq">H = (p<sub>d</sub> − p<sub>s</sub>)/ρg + (v<sub>d</sub>² − v<sub>s</sub>²)/2g + Δz</p><p>The rig's gauges sit on equal-bore flanges at the same height, so head is simply the pressure difference in metres of the fluid actually in the loop — density matters when you switch to glycol.</p></article>
+      <article><h3>Power and efficiency</h3><p class="eq">P<sub>hyd</sub> = ρgQH &nbsp;·&nbsp; η<sub>pump</sub> = P<sub>hyd</sub>/P<sub>shaft</sub> &nbsp;·&nbsp; η<sub>overall</sub> = P<sub>hyd</sub>/P<sub>elec</sub> &nbsp;·&nbsp; P<sub>elec</sub> = √3·V·I·cos φ</p><p>Motor current and power are what you can measure on a real board; shaft power needs the motor's efficiency, which falls at part load. The efficiency curve is built from recorded points, not read off a nameplate.</p></article>
+      <article><h3>Affinity laws</h3><p class="eq">Q₂/Q₁ = n₂/n₁ &nbsp;·&nbsp; H₂/H₁ = (n₂/n₁)² &nbsp;·&nbsp; P₂/P₁ = (n₂/n₁)³</p><p>Record the H–Q curve at 100 %, then at 80 % and 60 %. Points recorded at a fixed throttle across speeds fall on the system curve, not on an affinity curve — a common confusion the chart makes visible.</p></article>
+      <article><h3>Series and parallel</h3><p class="eq">Parallel: Q(H) = Q₁(H) + Q₂(H) &nbsp;·&nbsp; Series: H(Q) = H₁(Q) + H₂(Q)</p><p>Parallel pumps add flow at equal head; series pumps add head at equal flow. Against a steep system curve, a second pump in parallel adds far less than double the flow; against a flat one, series adds little head. Run P2 slower than P1 to see one pump being pushed off its curve.</p></article>
+      <article><h3>Bearings, vibration and temperature</h3><p>Bearing temperature follows speed and load with a time constant of minutes; vibration follows speed and rises sharply with cavitation or off-curve operation. In a closed loop nearly all shaft power ends up as heat in the fluid, so a long dead-headed run warms the tank — use the thermal ×20 clock to see it in class time.</p></article>
+      <article><h3>About the rig data</h3><p>[Illustrative rig data, for training only.] Two identical pumps: shut-off 32 m at 2 900 rpm, BEP 24 m³/h at 72 %, NPSH<sub>r</sub> = 1.5 + 0.004·Q² m; 4 kW motors, 400 V, full-load current 8.2 A. Tank 0.8 m³. Water or 30 % glycol.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the trainer</h2>
+    <ul>
+      <li><b>Curves are built, not shown.</b> The chart starts with only your recorded points. Vary the discharge throttle at fixed speed and record to build the H–Q and efficiency curves; vary speed at fixed throttle to build the system curve; repeat at other speeds for affinity; switch to parallel or series and repeat.</li>
+      <li><b>Reveal model curves</b> only to check your construction.</li>
+      <li><b>Sweep discharge throttle</b> records nine points automatically at the current speed and arrangement.</li>
+      <li><b>Instruments</b>: every reading a real board would give — suction and discharge pressure, flow, rpm, motor current and power, bearing vibration and temperature, fluid temperature. Head and efficiencies are derived and shown in the log so learners can check their own arithmetic.</li>
+      <li><b>Thermal ×20</b> speeds up bearing and fluid heating so a dead-head or a long run shows within a lesson.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>↑</kbd><kbd>↓</kbd> P1 speed · <kbd>←</kbd><kbd>→</kbd> discharge throttle · <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> single / parallel / series · <kbd>R</kbd> record · <kbd>S</kbd> sweep · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

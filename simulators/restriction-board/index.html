@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Restriction Board</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 02</span>
+    <h1>Restriction Board</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Pump stopped</span>
+    <span class="pill" id="pillElem">—</span>
+    <span class="pill warn hidden" id="pillCav">Throat cavitation</span>
+    <span class="pill warn hidden" id="pillRe">Low Reynolds number</span>
+    <span class="pill warn hidden" id="pillTap">Tap blocked</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Interchangeable restriction board with piezometer bank">
+    <div class="rig-head">
+      <h2>Test line with piezometer bank</h2>
+      <span class="legend"><i class="sw water"></i>static head (HGL) <i class="sw good"></i>energy line (EGL) <i class="sw taps"></i>taps</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+    <div class="readouts" id="readouts"></div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head">
+        <h2>Element curve · ΔP against flow</h2>
+        <span class="legend"><i class="sw brass"></i>this element <i class="sw water dim"></i>straight pipe for reference <i class="sw ink"></i>recorded points</span>
+      </div>
+      <canvas id="chart" width="900" height="440" aria-label="Differential pressure across the element against flow rate"></canvas>
+    </div>
+
+    <div class="controls">
+      <div class="ctl wide">
+        <label>Fitted element</label>
+        <div class="seg" id="elemSeg">
+          <button data-el="pipe" class="on">Straight pipe</button>
+          <button data-el="orifice">Orifice</button>
+          <button data-el="venturi">Venturi</button>
+          <button data-el="expansion">Sudden expansion</button>
+          <button data-el="contraction">Sudden contraction</button>
+          <button data-el="elbows">Elbows</button>
+          <button data-el="valve">Valve</button>
+        </div>
+      </div>
+      <div class="ctl" id="elemOpts"></div>
+      <div class="ctl">
+        <label for="speed">Supply pump speed <output id="speedOut">0 %</output></label>
+        <input type="range" id="speed" min="0" max="100" value="0" step="1">
+        <div class="ctl-foot"><span id="rpmOut">0 rpm</span><span class="btns"><button class="mini" data-speed="0">Stop</button><button class="mini" data-speed="40">40 %</button><button class="mini" data-speed="70">70 %</button><button class="mini" data-speed="100">100 %</button></span></div>
+      </div>
+      <div class="ctl">
+        <label for="throttle">Downstream throttle <output id="throttleOut">100 %</output></label>
+        <input type="range" id="throttle" min="5" max="100" value="100" step="1">
+        <div class="ctl-foot"><span>Sets the flow without touching the element under test</span></div>
+      </div>
+      <div class="ctl">
+        <label for="temp">Fluid temperature <output id="tempOut">20 °C</output></label>
+        <input type="range" id="temp" min="10" max="85" value="20" step="1">
+      </div>
+      <div class="ctl">
+        <label class="chk"><input type="checkbox" id="tapFault"> Simulate a blocked tapping (T3)</label>
+        <div class="ctl-actions">
+          <button class="act" id="btnRecord">Record point</button>
+          <button class="act" id="btnSweep">Auto-sweep flow</button>
+          <button class="act ghost" id="btnReset">Reset</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="data" role="tab">Readouts</button>
+    <button class="tab" data-tab="taps" role="tab">Tapping-point table</button>
+    <button class="tab" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+
+  <div class="tabpanel on" id="tab-data"><div class="grid-data" id="dataGrid"></div></div>
+
+  <div class="tabpanel" id="tab-taps">
+    <div class="tablewrap"><table id="tapTable"><thead><tr><th>Tap</th><th>Position m</th><th>Bore mm</th><th>Velocity m/s</th><th>Static head m</th><th>Velocity head m</th><th>Total head m</th><th>Gauge kPa</th></tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div class="tabpanel" id="tab-log">
+    <div class="log-tools">
+      <span>One row per recorded point. Auto-sweep records eight points across the flow range, which traces the element's ΔP–Q curve.</span>
+      <span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="restriction-board-log.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span>
+    </div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Element</th><th>Setting</th><th>Q m³/h</th><th>v m/s</th><th>Re</th><th>ΔP taps kPa</th><th>Permanent loss kPa</th><th>K</th><th>Meter Q m³/h</th><th>Error %</th></tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article>
+        <h3>Bernoulli along the board</h3>
+        <p class="eq">p/ρg + v²/2g + z = constant − losses</p>
+        <p>Each piezometer tube shows static head p/ρg. Add the velocity head and you get the energy line. Where the bore narrows the fluid speeds up and the static head falls; where it widens the static head recovers. The energy line only ever falls.</p>
+      </article>
+      <article>
+        <h3>Friction in straight pipe</h3>
+        <p class="eq">h<sub>f</sub> = f · (L/D) · v²/2g &nbsp;&nbsp; Re = ρvD/μ</p>
+        <p>The tubes fall in a straight line: loss is proportional to length. Double the flow and the loss roughly quadruples in turbulent flow.</p>
+      </article>
+      <article>
+        <h3>Minor losses</h3>
+        <p class="eq">h<sub>L</sub> = K · v²/2g &nbsp;&nbsp; K<sub>exp</sub> = (1 − A₁/A₂)² &nbsp;&nbsp; K<sub>con</sub> ≈ 0.5(1 − A₂/A₁)</p>
+        <p>Each fitting is a loss coefficient on the local velocity head. Elbows add up; a standard elbow costs about 0.9 velocity heads, a long-radius one about 0.3.</p>
+      </article>
+      <article>
+        <h3>Flow measurement</h3>
+        <p class="eq">Q = C<sub>d</sub> · A<sub>t</sub> · √(2ΔP / ρ(1 − β⁴)) &nbsp;&nbsp; β = d/D</p>
+        <p>Orifice and venturi read the same physics with different discharge coefficients (about 0.61 and 0.98) and very different permanent losses: the orifice throws most of its ΔP away, the venturi recovers it.</p>
+      </article>
+      <article>
+        <h3>System curves</h3>
+        <p class="eq">ΔP = K · ρv²/2 = K · ρ/2 · (Q/A)² ∝ Q²</p>
+        <p>Every element's ΔP–Q curve is a parabola through the origin in fully turbulent flow. The curve you trace with the auto-sweep is the element's contribution to the system curve a pump has to overcome.</p>
+      </article>
+      <article>
+        <h3>About the rig data</h3>
+        <p>[Illustrative rig data, for training only.] Main line DN40 (41.9 mm bore), board length 2.0 m, taps T1–T6, supply from the same 4 kW pump as the Hydraulic Loop Bench. Discharge coefficients are textbook values, not calibrated instrument data.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the board</h2>
+    <ul>
+      <li><b>Pick an element</b> from the board. Its options appear beside it: throat ratio for the meters, downstream or upstream bore for the steps, number and type of elbows, opening for the valve.</li>
+      <li><b>Set the flow</b> with the supply pump and the downstream throttle. The piezometer tubes rise and fall with the pressure at each tap; the green line is the energy line.</li>
+      <li><b>Read ΔP</b> between T2 and T4 across the element, and the permanent loss between T1 and T6. For the meters, the inferred flow is compared with the reference flowmeter.</li>
+      <li><b>Record</b> or auto-sweep to trace the element's ΔP–Q curve on the chart.</li>
+      <li><b>Break it.</b> Push a venturi hard with warm fluid to cavitate the throat; run an orifice at very low flow to see its coefficient drift; block a tap and see what a stale reading does to the profile.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>↑</kbd><kbd>↓</kbd> pump speed · <kbd>←</kbd><kbd>→</kbd> throttle · <kbd>1</kbd>–<kbd>7</kbd> element · <kbd>R</kbd> record · <kbd>S</kbd> sweep · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

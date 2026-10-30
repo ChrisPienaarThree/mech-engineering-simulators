@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fatigue and Stress Concentration Bench</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 18</span>
+    <h1>Fatigue and Stress Concentration Bench</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Paused</span>
+    <span class="pill ok" id="pillState">—</span>
+    <span class="pill" id="pillKf">—</span>
+    <span class="pill amber hidden" id="pillYield">Notch yielding</span>
+    <span class="pill amber hidden" id="pillCrack">Crack at the notch</span>
+    <span class="pill warn hidden" id="pillFrac">FRACTURED</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Notched specimen under cyclic load">
+    <div class="rig-head">
+      <h2 id="rigTitle">Stepped shaft in bending · fillet at the shoulder</h2>
+      <span class="legend"><i class="sw taps"></i>load and stress concentration <i class="sw brass"></i>Miner damage <i class="sw water"></i>crack</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="readouts">
+      <div class="ro"><span class="k">Stress concentration Kt</span><span class="v" id="roKt">—</span><span class="u">geometric · notch radius <span id="roRn">—</span> mm</span></div>
+      <div class="ro"><span class="k">Fatigue concentration Kf</span><span class="v" id="roKf">—</span><span class="u">q <span id="roQ">—</span> · Peterson a <span id="roA">—</span> mm</span></div>
+      <div class="ro"><span class="k">Endurance limit Se</span><span class="v" id="roSe">—</span><span class="u">MPa · Se′ <span id="roSe0">—</span> × ka <span id="roKa">—</span> kb <span id="roKb">—</span> kc <span id="roKc">—</span> ke <span id="roKe">—</span></span></div>
+      <div class="ro" id="roSaBox"><span class="k">Stress at the notch</span><span class="v" id="roSa">—</span><span class="u">MPa alternating · mean <span id="roSm">—</span> · nominal <span id="roSnom">—</span></span></div>
+      <div class="ro" id="roNfBox"><span class="k">Factor of safety</span><span class="v" id="roNf">—</span><span class="u"><span id="roCrit">Goodman</span> · yield (Langer) <span id="roNy">—</span></span></div>
+      <div class="ro" id="roNBox"><span class="k">Predicted life</span><span class="v" id="roN">—</span><span class="u">cycles · σar <span id="roSar">—</span> MPa · <span id="roHours">—</span> h at this frequency</span></div>
+      <div class="ro" id="roDBox"><span class="k">Cycles run</span><span class="v" id="roCyc">0</span><span class="u">Miner damage <span id="roD">0</span> %</span></div>
+      <div class="ro" id="roCrackBox"><span class="k">Crack length</span><span class="v" id="roCrack">0</span><span class="u">mm · critical <span id="roAc">—</span> mm</span></div>
+      <div class="ro"><span class="k">Cycle rate</span><span class="v" id="roRate">—</span><span class="u">cycles per second of wall time</span></div>
+      <div class="ro"><span class="k">Specimens</span><span class="v" id="roSpec">1</span><span class="u">fractured <span id="roFrac">0</span></span></div>
+    </div>
+
+    <div class="controls">
+      <div class="types" id="types"><button class="on" data-type="bend">Stepped shaft · bending</button><button data-type="axial">Stepped shaft · axial</button><button data-type="hole">Plate with a hole · axial</button></div>
+      <div class="grp-title">Material and geometry</div>
+      <div class="ctl"><label>Material <select id="mat"><option value="s1045" selected>Steel 1045 normalised · Su 620 · Sy 400</option><option value="s4340">Steel 4340 Q&amp;T · Su 1100 · Sy 950</option><option value="s304">Stainless 304 · Su 580 · Sy 240</option><option value="al6061">Aluminium 6061-T6 · Su 310 · Sy 275 (no endurance limit)</option><option value="al7075">Aluminium 7075-T6 · Su 570 · Sy 500 (no endurance limit)</option></select></label></div>
+      <div class="ctl" data-m="bend axial"><label for="d">Small diameter d <output id="dOut">25 mm</output></label><input type="range" id="d" min="10" max="60" value="25" step="1"></div>
+      <div class="ctl" data-m="bend axial"><label>Shoulder ratio D/d <select id="Dd"><option value="1.05">1.05</option><option value="1.1">1.10</option><option value="1.2">1.20</option><option value="1.5" selected>1.50</option><option value="2">2.00</option><option value="3">3.00</option></select></label></div>
+      <div class="ctl" data-m="bend axial"><label for="r">Fillet radius r <output id="rOut">0.5 mm</output></label><input type="range" id="r" min="0.2" max="10" value="0.5" step="0.1"></div>
+      <div class="ctl" data-m="hole"><label for="w">Plate width w <output id="wOut">50 mm</output></label><input type="range" id="w" min="30" max="100" value="50" step="1"></div>
+      <div class="ctl" data-m="hole"><label for="t">Plate thickness t <output id="tOut">8 mm</output></label><input type="range" id="t" min="3" max="15" value="8" step="1"></div>
+      <div class="ctl" data-m="hole"><label for="dh">Hole diameter <output id="dhOut">10 mm</output></label><input type="range" id="dh" min="3" max="30" value="10" step="1"></div>
+      <div class="ctl"><label>Surface finish <select id="finish"><option value="ground">Ground</option><option value="machined" selected>Machined / cold drawn</option><option value="hot">Hot rolled</option><option value="forged">As forged</option></select></label></div>
+      <div class="ctl"><label>Reliability <select id="rel"><option value="50" selected>50 %</option><option value="90">90 %</option><option value="99">99 %</option><option value="99.9">99.9 %</option></select></label></div>
+      <div class="grp-title">Cyclic load</div>
+      <div class="ctl"><label for="La"><span id="LaName">Moment amplitude Ma</span> <output id="LaOut">220 N·m</output></label><input type="range" id="La" min="0" max="1500" value="220" step="5"></div>
+      <div class="ctl"><label for="Lm"><span id="LmName">Mean moment Mm</span> <output id="LmOut">0 N·m</output></label><input type="range" id="Lm" min="-500" max="1500" value="0" step="5"></div>
+      <div class="ctl"><label>Mean-stress criterion <select id="crit"><option value="goodman" selected>Modified Goodman</option><option value="gerber">Gerber</option><option value="soderberg">Soderberg</option><option value="asme">ASME-elliptic</option></select></label></div>
+      <div class="ctl"><label for="f">Load frequency <output id="fOut">10 Hz</output></label><input type="range" id="f" min="1" max="50" value="10" step="1"></div>
+      <div class="ctl"><label>Cycle clock <select id="tscale"><option value="1">×1 (real time)</option><option value="10">×10</option><option value="100">×100</option><option value="200" selected>×200</option><option value="1000">×1 000</option><option value="5000">×5 000</option><option value="10000">×10 000</option></select></label></div>
+      <div class="ctl-actions">
+        <button class="act" id="btnRun">Start cycling</button>
+        <button class="act ghost" id="btnStop">Pause</button>
+        <button class="act ghost" id="btnNew">New specimen</button>
+        <button class="act ghost" id="btnRecord">Record reading</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="base">Sharp fillet, 1045 shaft</button>
+          <button class="mini" data-preset="bigr">Fillet radius 4 mm</button>
+          <button class="mini" data-preset="polish">Ground finish</button>
+          <button class="mini" data-preset="mean">Add mean stress</button>
+          <button class="mini" data-preset="strong">Same shaft in 4340</button>
+          <button class="mini" data-preset="infinite">Infinite-life design</button>
+          <button class="mini" data-preset="alu">Aluminium, no endurance limit</button>
+          <button class="mini" data-preset="hole">Plate with a hole</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2>S-N diagram · smooth specimen, this part, and where the load sits</h2><span class="legend"><i class="sw steel"></i>polished specimen <i class="sw water"></i>this part <i class="sw taps"></i>cycle clock <i class="sw brass"></i>predicted failure</span></div>
+      <canvas id="chart" width="900" height="290" aria-label="S-N diagram"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Goodman diagram · mean stress against alternating stress at the notch</h2><span class="legend"><i class="sw water"></i>Goodman <i class="sw good"></i>Gerber <i class="sw brass"></i>Soderberg <i class="sw taps"></i>yield · load point</span></div>
+      <canvas id="gchart" width="900" height="270" aria-label="Goodman diagram"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2 id="traceTitle">Crack growth · Paris law from initiation to the critical crack</h2></div>
+      <canvas id="trace" width="900" height="170" aria-label="Crack length against cycles"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Each reading stores geometry, material, finish, load, Kt, q, Kf, Se, notch stresses, the equivalent reversed stress, the factors of safety, the predicted life, the cycles run and the crack length. Fractures are logged automatically.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="fatigue-bench.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Tag</th><th>Geometry</th><th>Material</th><th>Size</th><th>r mm</th><th>Finish</th><th>Ampl.</th><th>Mean</th><th>Kt</th><th>q</th><th>Kf</th><th>Se</th><th>σa</th><th>σm</th><th>σar</th><th>n_f</th><th>n_y</th><th>N</th><th>Cycles</th><th>Crack mm</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>Stress concentration</h3><p class="eq">σ<sub>peak</sub> = K<sub>t</sub> σ<sub>nom</sub> &nbsp;·&nbsp; q = 1 / (1 + a/r) &nbsp;·&nbsp; K<sub>f</sub> = 1 + q (K<sub>t</sub> − 1)</p><p>A fillet, hole or groove raises the local stress by the geometric factor Kt, which depends only on shape (r/d and D/d). Under cyclic load the material does not feel the whole of it: the notch sensitivity q, which rises with strength and with notch radius, gives the fatigue factor Kf. Sharp notches in high-strength steel are felt almost fully; blunt notches in soft steel are partly forgiven.</p></article>
+      <article><h3>Endurance limit and Marin factors</h3><p class="eq">S<sub>e</sub> = k<sub>a</sub> k<sub>b</sub> k<sub>c</sub> k<sub>e</sub> S<sub>e</sub>′ &nbsp;·&nbsp; S<sub>e</sub>′ ≈ 0.5 S<sub>u</sub> (steel)</p><p>The polished laboratory specimen sets Se′. The real part is derated for surface finish (ka, worst for forged and hot-rolled surfaces), size (kb), load type (kc, axial 0.85) and reliability (ke). Aluminium has no knee: its S-N line keeps falling, so a "fatigue strength" is quoted at 5×10⁸ cycles.</p></article>
+      <article><h3>S-N curve</h3><p class="eq">S<sub>f</sub> = a N<sup>b</sup> &nbsp;·&nbsp; a = (f S<sub>u</sub>)² / S<sub>e</sub> &nbsp;·&nbsp; b = −⅓ log(f S<sub>u</sub> / S<sub>e</sub>) &nbsp;·&nbsp; N = (σ<sub>ar</sub> / a)^{1/b}</p><p>Between 10³ and 10⁶ cycles the strength falls as a straight line on log-log axes. Because the slope is shallow, a small change in stress makes a large change in life: halving the stress amplitude near the knee can multiply life a hundredfold. That is why radius, finish and mean stress matter so much.</p></article>
+      <article><h3>Mean stress</h3><p class="eq">Goodman: σ<sub>a</sub>/S<sub>e</sub> + σ<sub>m</sub>/S<sub>u</sub> = 1/n &nbsp;·&nbsp; Gerber: σ<sub>a</sub>/S<sub>e</sub> + (σ<sub>m</sub>/S<sub>u</sub>)² = 1/n &nbsp;·&nbsp; Langer: σ<sub>a</sub> + σ<sub>m</sub> = S<sub>y</sub>/n</p><p>A tensile mean stress uses up part of the fatigue strength. The criteria differ in how much: Goodman is linear and conservative, Gerber fits test data through the middle, Soderberg is safest, ASME-elliptic sits between. The equivalent completely reversed stress σar converts the (σm, σa) pair into the stress the S-N curve understands. Yield is checked separately: if Kf·σmax exceeds Sy the notch yields and the mean stress relaxes.</p></article>
+      <article><h3>Crack growth</h3><p class="eq">da/dN = C (ΔK)^m &nbsp;·&nbsp; ΔK = Y Δσ √(πa) &nbsp;·&nbsp; a<sub>c</sub> = (K<sub>c</sub> / Y σ<sub>max</sub>)² / π</p><p>Most of a notched part's life is spent making a crack; once a crack exists the Paris law grows it faster and faster until it reaches the critical length and the ligament fails. A visible crack usually means little life remains. Only the tensile part of the cycle opens the crack.</p></article>
+      <article><h3>About the numbers</h3><p>[Illustrative data, for training only.] Kt curve fits follow the usual stepped-shaft and plate-with-hole charts; Peterson's constant a = 0.0254 (2070/Su)^1.8 mm for steel and 0.5 mm for aluminium; Marin factors per the textbook tables; the low-cycle region below 10³ cycles is simplified; Paris constants are typical class values and the crack-growth phase is compressed into the S-N life when it would exceed it.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the bench</h2>
+    <ul>
+      <li><b>Choose</b> a stepped shaft (bending or axial) or a plate with a hole, then the material, dimensions, fillet radius or hole size, finish and reliability.</li>
+      <li><b>Load it</b>: amplitude and mean, the criterion, the frequency and the cycle clock. The readouts give Kt, q, Kf, Se, the notch stresses, factors of safety and the predicted life.</li>
+      <li><b>Start cycling</b>: the damage bar fills, the crack initiates at the notch (drawn magnified), grows along the Paris curve and the specimen fractures. New specimen resets the clock.</li>
+      <li><b>Charts</b>: the S-N diagram with the smooth-specimen and derated curves, the Goodman diagram with all criteria, and the crack-growth curve. Recorded readings appear as grey dots.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>Space</kbd> cycle / pause · <kbd>N</kbd> new specimen · <kbd>R</kbd> record · <kbd>1</kbd>–<kbd>3</kbd> geometry · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

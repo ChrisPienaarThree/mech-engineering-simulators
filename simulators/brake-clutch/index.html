@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Brake and Clutch Demonstrator</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 17</span>
+    <h1>Brake and Clutch Demonstrator</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Stopped</span>
+    <span class="pill ok" id="pillState">—</span>
+    <span class="pill" id="pillMode">—</span>
+    <span class="pill warn hidden" id="pillFade">FADE — friction below 80 % of cold</span>
+    <span class="pill warn hidden" id="pillOverP">Lining pressure above allowable</span>
+    <span class="pill amber hidden" id="pillHot">Lining above 400 °C</span>
+    <span class="pill warn hidden" id="pillLock">Drum self-locking</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Disc brake, drum brake or plate clutch on a flywheel">
+    <div class="rig-head">
+      <h2 id="rigTitle">Disc brake · floating caliper, two pads on a ventilated disc</h2>
+      <span class="legend"><i class="sw taps"></i>actuating force <i class="sw brass"></i>lining <i class="sw water"></i>torque <i class="sw good"></i>friction bar</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="readouts">
+      <div class="ro"><span class="k">Clamp / actuating force</span><span class="v" id="roF">—</span><span class="u">kN · <span id="roFNote">—</span></span></div>
+      <div class="ro"><span class="k">Effective friction radius</span><span class="v" id="roRe">—</span><span class="u">mm · <span id="roReNote">—</span></span></div>
+      <div class="ro" id="roPBox"><span class="k">Lining pressure (max)</span><span class="v" id="roP">—</span><span class="u">MPa · allowable <span id="roPallow">—</span> · mean <span id="roPmean">—</span></span></div>
+      <div class="ro" id="roTqBox"><span class="k">Torque capacity</span><span class="v" id="roTq">—</span><span class="u">N·m now · <span id="roTq0">—</span> cold · brake factor <span id="roBF">—</span></span></div>
+      <div class="ro" id="roMuBox"><span class="k">Friction coefficient</span><span class="v" id="roMu">—</span><span class="u">now · cold <span id="roMu0">—</span> · <span id="roFade">—</span> % of cold</span></div>
+      <div class="ro"><span class="k">Energy per event</span><span class="v" id="roE">—</span><span class="u">kJ · <span id="roENote">—</span></span></div>
+      <div class="ro"><span class="k">Temperature rise per event</span><span class="v" id="roDT">—</span><span class="u">K adiabatic in <span id="roMrot">—</span> kg of rotor</span></div>
+      <div class="ro" id="roTBox"><span class="k">Lining temperature</span><span class="v" id="roT">—</span><span class="u">°C · fade begins near <span id="roTfade">—</span> °C</span></div>
+      <div class="ro"><span class="k">Last <span id="roTsNote">stop time</span></span><span class="v" id="roTs">—</span><span class="u">s measured · estimate <span id="roTsEst">—</span> s</span></div>
+      <div class="ro"><span class="k">Events</span><span class="v" id="roEv">0</span><span class="u">last peak heat <span id="roPpk">—</span> kW</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="types" id="types"><button class="on" data-type="disc">Disc brake</button><button data-type="drum">Drum brake</button><button data-type="clutch">Plate clutch</button></div>
+      <div class="grp-title">Actuation and lining</div>
+      <div class="ctl" data-m="disc drum"><label for="p">Hydraulic pressure <output id="pOut">40 bar</output></label><input type="range" id="p" min="5" max="150" value="40" step="1"></div>
+      <div class="ctl" data-m="disc drum"><label for="dp">Piston bore <output id="dpOut">44 mm</output></label><input type="range" id="dp" min="20" max="60" value="44" step="1"></div>
+      <div class="ctl" data-m="clutch"><label for="Fs">Spring clamp force <output id="FsOut">4.0 kN</output></label><input type="range" id="Fs" min="1" max="20" value="4" step="0.5"></div>
+      <div class="ctl" data-m="clutch"><label for="plates">Friction plates <output id="platesOut">1</output></label><input type="range" id="plates" min="1" max="3" value="1" step="1"></div>
+      <div class="ctl" data-m="disc clutch"><label for="ro">Lining outer radius <output id="roOut">140 mm</output></label><input type="range" id="ro" min="60" max="200" value="140" step="5"></div>
+      <div class="ctl" data-m="disc clutch"><label for="ri">Lining inner radius <output id="riOut">100 mm</output></label><input type="range" id="ri" min="30" max="180" value="100" step="5"></div>
+      <div class="ctl" data-m="disc"><label for="pad">Pad arc <output id="padOut">100°</output></label><input type="range" id="pad" min="20" max="180" value="100" step="5"></div>
+      <div class="ctl" data-m="drum"><label for="dd">Drum diameter <output id="ddOut">250 mm</output></label><input type="range" id="dd" min="150" max="400" value="250" step="10"></div>
+      <div class="ctl" data-m="drum"><label for="w">Shoe width <output id="wOut">50 mm</output></label><input type="range" id="w" min="20" max="90" value="50" step="5"></div>
+      <div class="ctl"><label>Lining material <select id="mat"><option value="organic" selected>Organic · μ 0.40 · fades from 300 °C · 1.0 MPa</option><option value="semi">Semi-metallic · μ 0.38 · 450 °C · 1.6 MPa</option><option value="sintered">Sintered metallic · μ 0.32 · 600 °C · 3.0 MPa</option><option value="ceramic">Ceramic composite · μ 0.36 · 550 °C · 2.0 MPa</option></select></label></div>
+      <div class="ctl" data-m="disc clutch"><label>Pressure distribution <select id="dist"><option value="wear" selected>Uniform wear (worn-in, conservative)</option><option value="pressure">Uniform pressure (new, rigid)</option></select></label></div>
+      <div class="grp-title">Inertia and load</div>
+      <div class="ctl" data-m="disc drum"><label for="J">Inertia being stopped <output id="JOut">20 kg·m²</output></label><input type="range" id="J" min="1" max="100" value="20" step="1"></div>
+      <div class="ctl" data-m="disc drum"><label for="n0">Speed before the stop <output id="n0Out">1500 rpm</output></label><input type="range" id="n0" min="200" max="3000" value="1500" step="50"></div>
+      <div class="ctl" data-m="clutch"><label for="ne">Engine speed <output id="neOut">2000 rpm</output></label><input type="range" id="ne" min="800" max="4000" value="2000" step="50"></div>
+      <div class="ctl" data-m="clutch"><label for="Teng">Engine torque during engagement <output id="TengOut">150 N·m</output></label><input type="range" id="Teng" min="20" max="500" value="150" step="10"></div>
+      <div class="ctl" data-m="clutch"><label for="Je">Engine inertia <output id="JeOut">0.40 kg·m²</output></label><input type="range" id="Je" min="0.05" max="2" value="0.4" step="0.05"></div>
+      <div class="ctl" data-m="clutch"><label for="Jl">Load inertia <output id="JlOut">1.0 kg·m²</output></label><input type="range" id="Jl" min="0.2" max="20" value="1" step="0.2"></div>
+      <div class="ctl" data-m="clutch"><label for="TL">Load torque <output id="TLOut">60 N·m</output></label><input type="range" id="TL" min="0" max="500" value="60" step="10"></div>
+      <div class="ctl" data-m="clutch"><label for="ta">Pedal release time <output id="taOut">0.6 s</output></label><input type="range" id="ta" min="0.1" max="3" value="0.6" step="0.1"></div>
+      <div class="grp-title">Thermal and clock</div>
+      <div class="ctl"><label for="mrot">Rotor mass (disc / drum / plates) <output id="mrotOut">6 kg</output></label><input type="range" id="mrot" min="1" max="30" value="6" step="1"></div>
+      <div class="ctl"><label for="cool">Cooling factor <output id="coolOut">×1.0</output></label><input type="range" id="cool" min="0.2" max="3" value="1" step="0.1"></div>
+      <div class="ctl"><label for="Tamb">Ambient <output id="TambOut">25 °C</output></label><input type="range" id="Tamb" min="0" max="50" value="25" step="1"></div>
+      <div class="ctl"><label for="repeat">Auto-repeat interval <output id="repeatOut">20 s</output></label><input type="range" id="repeat" min="3" max="120" value="20" step="1"></div>
+      <div class="ctl"><label for="tscale">Clock <output id="tscaleOut">×1</output></label><input type="range" id="tscale" min="1" max="20" value="1" step="1"></div>
+      <div class="ctl-actions">
+        <button class="act" id="btnRun">Start</button>
+        <button class="act ghost" id="btnStop">Stop</button>
+        <button class="act" id="btnEvent">Apply brake</button>
+        <button class="act ghost" id="btnAuto">Auto-repeat: off</button>
+        <button class="act ghost" id="btnReset">Reset (cool, new lining)</button>
+        <button class="act ghost" id="btnRecord">Record reading</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="single">Single stop from 1 500 rpm</button>
+          <button class="mini" data-preset="repeat">Repeated stops → fade</button>
+          <button class="mini" data-preset="overp">Small pad, high pressure</button>
+          <button class="mini" data-preset="drum">Drum brake, same actuation</button>
+          <button class="mini" data-preset="drumfade">Drum brake fade</button>
+          <button class="mini" data-preset="clutch">Clutch engagement</button>
+          <button class="mini" data-preset="clutchheavy">Heavy load, slow release</button>
+          <button class="mini" data-preset="clutchover">Overloaded clutch, slips for ever</button>
+          <button class="mini" data-preset="stall">Dump the clutch → stall</button>
+          <button class="mini" data-preset="clutchrepeat">Repeated engagements</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2 id="chartTitle">Transient · speed, torque and lining temperature through the last stop or engagement</h2><span class="legend"><i class="sw water"></i>rotor / engine rpm <i class="sw deep"></i>load rpm <i class="sw taps"></i>torque <i class="sw brass"></i>lining °C <i class="sw good"></i>stop / lock-up</span></div>
+      <canvas id="chart" width="900" height="300" aria-label="Transient of the last event"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2 id="traceTitle">History · lining temperature, friction and speed over repeated events</h2></div>
+      <canvas id="trace" width="900" height="220" aria-label="Temperature and friction history"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Each reading stores the mode, lining, actuation, clamp force, friction radius, lining pressure, friction, torque, brake factor, temperature and the last event's energy, temperature rise and time. Every completed stop or engagement is logged automatically.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="brake-clutch.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Tag</th><th>Mode</th><th>Lining</th><th>Distribution</th><th>Actuation</th><th>F N</th><th>Re mm</th><th>p max MPa</th><th>μ</th><th>Torque N·m</th><th>Brake factor</th><th>T °C</th><th>E kJ</th><th>ΔT K</th><th>Time s</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>Torque capacity</h3><p class="eq">T = μ · F · R<sub>e</sub> · n<sub>faces</sub> &nbsp;·&nbsp; uniform wear: R<sub>e</sub> = (r<sub>o</sub> + r<sub>i</sub>)/2 &nbsp;·&nbsp; uniform pressure: R<sub>e</sub> = ⅔ (r<sub>o</sub>³ − r<sub>i</sub>³)/(r<sub>o</sub>² − r<sub>i</sub>²)</p><p>Hydraulic pressure on the piston makes the clamp force; friction times clamp force times the radius at which it acts is the torque. A new, rigid pad presses uniformly and its friction acts a little further out; once the pad has worn in, pressure is highest at the inner edge (p·r = constant) and the effective radius drops to the mean radius. Design on uniform wear.</p></article>
+      <article><h3>Lining pressure</h3><p class="eq">uniform wear: p<sub>max</sub> = F / (θ r<sub>i</sub> (r<sub>o</sub> − r<sub>i</sub>))</p><p>Every lining material has an allowable pressure. Below it the lining wears predictably; above it the surface glazes, crumbles or fades early. Small pads under high pressure are the usual mistake.</p></article>
+      <article><h3>Energy and temperature rise</h3><p class="eq">E = ½ J ω² &nbsp;·&nbsp; ΔT = E / (m c) &nbsp;·&nbsp; t<sub>stop</sub> = J ω / T</p><p>A stop turns all the kinetic energy into heat in the rotor within the stop time. The adiabatic temperature rise is the energy over rotor mass times specific heat; cooling between stops is what stops the temperature ratcheting. A clutch engagement dissipates the slip energy ∫ T (ω<sub>e</sub> − ω<sub>l</sub>) dt in the friction faces, which for constant torques is T·Δω·t<sub>slip</sub>/2.</p></article>
+      <article><h3>Fade</h3><p>Above its fade temperature the resin in an organic lining out-gasses and μ collapses: here μ falls smoothly to about a third of its cold value. Torque capacity falls with it, so the stop takes longer, absorbs the same energy over more time, and the next stop starts hotter. A drum brake suffers more because its leading shoe multiplies μ.</p></article>
+      <article><h3>Drum brakes</h3><p class="eq">N<sub>leading</sub> = F k /(1 − μ q) &nbsp;·&nbsp; N<sub>trailing</sub> = F k /(1 + μ q) &nbsp;·&nbsp; brake factor = T / (F r)</p><p>The friction force on the leading shoe rotates it harder into the drum (self-energising), so the drum gives more torque per newton of actuation than a disc: a high brake factor. The price is sensitivity: torque swings with μ, water and heat, and as μq → 1 the shoe self-locks.</p></article>
+      <article><h3>Clutch engagement</h3><p class="eq">J<sub>e</sub> ω̇<sub>e</sub> = T<sub>engine</sub> − T<sub>c</sub> &nbsp;·&nbsp; J<sub>l</sub> ω̇<sub>l</sub> = T<sub>c</sub> − T<sub>load</sub> &nbsp;·&nbsp; slip time ≈ Δω / [(T<sub>c</sub> − T<sub>e</sub>)/J<sub>e</sub> + (T<sub>c</sub> − T<sub>L</sub>)/J<sub>l</sub>]</p><p>While the plates slip the clutch transmits its full capacity: the engine droops and the load spins up until the speeds meet and the plates lock. Then the clutch carries only what the load needs. If the capacity is below the load torque the plates never lock, all the engine power goes into the faces and the clutch burns.</p></article>
+      <article><h3>About the numbers</h3><p>[Illustrative data, for training only.] Lining friction, fade temperatures and allowable pressures are typical values; fade is a smooth curve to 35 % of cold; the drum uses a lever ratio 1.6 and self-energising ratio 1.25; rotor specific heat 480 J/kg·K; cooling is a simple speed-dependent coefficient. Real designs use test data for the specific friction pair.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the demonstrator</h2>
+    <ul>
+      <li><b>Choose</b> disc brake, drum brake or plate clutch, then set the actuation (pressure and bore, or spring force), the lining geometry and material, and the inertia or load.</li>
+      <li><b>Apply brake / Engage clutch</b> runs one event: the transient chart shows speed, torque and lining temperature, the readouts give stop or slip time, energy and temperature rise. <b>Auto-repeat</b> runs events back to back so the lining heats and fades. The clock speeds the thermal history.</li>
+      <li><b>Bars</b> on the right show lining temperature against the fade point and friction as a share of cold friction.</li>
+      <li><b>Record</b> readings to compare distributions, pressures, disc against drum and cold against faded in the tasks. Every completed event is also logged.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>Space</kbd> run / pause · <kbd>B</kbd> apply / engage · <kbd>A</kbd> auto-repeat · <kbd>R</kbd> record · <kbd>1</kbd>–<kbd>3</kbd> mode · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

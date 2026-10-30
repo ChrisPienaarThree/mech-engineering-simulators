@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>API 650 Tank Design Demonstrator</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 26</span>
+    <h1>API 650 Tank Design Demonstrator</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Running</span>
+    <span class="pill" id="pillState">—</span>
+    <span class="pill" id="pillTank">—</span>
+    <span class="pill" id="pillFill">Empty</span>
+    <span class="pill warn hidden" id="pillOver">SHELL OVERSTRESSED</span>
+    <span class="pill warn hidden" id="pillSpill">OVERFILL</span>
+    <span class="pill warn hidden" id="pillVDP">D over 61 m — one-foot method not permitted</span>
+    <span class="pill amber hidden" id="pillGird">Intermediate wind girder required</span>
+    <span class="pill amber hidden" id="pillAnch">Anchors required</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Tank elevation">
+    <div class="rig-head">
+      <h2 id="rigTitle">Welded storage tank · elevation with the shell wall thickness exaggerated · click a course to select it</h2>
+      <span class="legend"><i class="sw steel"></i>shell course <i class="sw taps"></i>failing course <i class="sw brass"></i>product <i class="sw water"></i>test water <i class="sw good"></i>girder / ring</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="readouts">
+      <div class="ro"><span class="k">Working capacity</span><span class="v" id="roCap">—</span><span class="u">m³ to the design level · nominal <span id="roNom">—</span> m³ · <span id="roKg">—</span> kg steel per m³</span></div>
+      <div class="ro" id="roT1Box"><span class="k">Bottom course</span><span class="v" id="roT1">—</span><span class="u">mm ordered · required <span id="roT1req">—</span> · <span id="roT1gov">—</span> governs</span></div>
+      <div class="ro" id="roSchedBox"><span class="k">Plate schedule</span><span class="v small" id="roSched">—</span><span class="u" id="roSchedNote">—</span></div>
+      <div class="ro"><span class="k">Steel</span><span class="v" id="roMassT">—</span><span class="u">t total · shell <span id="roMassS">—</span> · bottom <span id="roMassB">—</span> · roof <span id="roMassR">—</span></span></div>
+      <div class="ro" id="roBotBox"><span class="k">Bottom plates</span><span class="v small" id="roBot">—</span><span class="u" id="roBotNote">—</span></div>
+      <div class="ro" id="roRoofBox"><span class="k">Roof plate</span><span class="v" id="roRoof">—</span><span class="u" id="roRoofNote">—</span></div>
+      <div class="ro" id="roGirdBox"><span class="k">Intermediate wind girders</span><span class="v" id="roGird">—</span><span class="u" id="roGirdNote">—</span></div>
+      <div class="ro" id="roAnchBox"><span class="k">Anchorage</span><span class="v small" id="roAnch">—</span><span class="u" id="roAnchNote">—</span></div>
+      <div class="ro" id="roLiveBox"><span class="k">Live stress, bottom course</span><span class="v" id="roLive">—</span><span class="u" id="roLiveNote">—</span></div>
+      <div class="ro" id="roSelBox"><span class="k">Selected course</span><span class="v small" id="roSel">click a course</span><span class="u" id="roSelNote">then Thicker / Thinner / Auto</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="grp-title">Tank geometry and service</div>
+      <div class="ctl"><label for="D">Diameter D <output id="DOut">30.0 m</output></label><input type="range" id="D" min="4" max="80" value="30" step="0.5"></div>
+      <div class="ctl"><label for="n">Shell courses <output id="nOut">8 courses</output></label><input type="range" id="n" min="2" max="12" value="8" step="1"></div>
+      <div class="ctl"><label for="hc">Course height <output id="hcOut">1.80 m</output></label><input type="range" id="hc" min="1.5" max="3" value="1.8" step="0.1"></div>
+      <div class="ctl"><label for="H">Design liquid level H <output id="HOut">14.1 m</output></label><input type="range" id="H" min="1" max="14.4" value="14.1" step="0.1"></div>
+      <div class="ctl"><label for="G">Product specific gravity G <output id="GOut">0.85</output></label><input type="range" id="G" min="0.6" max="1.6" value="0.85" step="0.01"></div>
+      <div class="ctl"><label for="CA">Corrosion allowance <output id="CAOut">1.5 mm</output></label><input type="range" id="CA" min="0" max="6" value="1.5" step="0.5"></div>
+      <div class="ctl"><label>Shell material (Table 5-2 allowables) <select id="mat"><option value="a283c" selected>A283M Gr C · Sd 137 / St 154 MPa</option><option value="a36">A36M · Sd 160 / St 171 MPa</option><option value="a516_415">A516M Gr 415 · Sd 147 / St 165 MPa</option><option value="a516_485">A516M Gr 485 · Sd 173 / St 195 MPa</option><option value="a573_485">A573M Gr 485 · Sd 193 / St 208 MPa</option><option value="a537_1">A537M Cl 1 · Sd 194 / St 220 MPa</option></select></label></div>
+      <div class="grp-title">Roof and wind</div>
+      <div class="ctl"><label>Roof <select id="roof"><option value="cone" selected>Supported cone (rafters and columns)</option><option value="selfcone">Self-supporting cone</option><option value="dome">Self-supporting dome</option><option value="open">Open top (external floating roof)</option></select></label></div>
+      <div class="ctl" id="ctlSlope"><label for="slope">Roof slope <output id="slopeOut">3.6° (1:16)</output></label><input type="range" id="slope" min="2" max="40" value="3.6" step="0.1"></div>
+      <div class="ctl off" id="ctlRr"><label for="rr">Dome radius <output id="rrOut">1.00 × D</output></label><input type="range" id="rr" min="0.7" max="1.3" value="1.0" step="0.05"></div>
+      <div class="ctl two" id="ctlLoads"><div><label for="Lr">Roof live load <output id="LrOut">1.00 kPa</output></label><input type="range" id="Lr" min="1" max="2.5" value="1" step="0.05"></div><div><label for="S">Ground snow load <output id="SOut">0.00 kPa</output></label><input type="range" id="S" min="0" max="3" value="0" step="0.1"></div></div>
+      <div class="ctl"><label for="V">Design wind speed (3 s gust) <output id="VOut">190 km/h</output></label><input type="range" id="V" min="100" max="260" value="190" step="5"></div>
+      <div class="grp-title">Filling</div>
+      <div class="ctl"><label>Fluid <select id="fluid"><option value="product" selected>Product at G</option><option value="water">Water (hydrotest)</option></select></label></div>
+      <div class="ctl"><label for="fillRate">Fill rate <output id="fillRateOut">1000 m³/h</output></label><input type="range" id="fillRate" min="100" max="5000" value="1000" step="100"></div>
+      <div class="ctl"><label for="tscale">Clock <output id="tscaleOut">×300</output></label><input type="range" id="tscale" min="10" max="600" value="300" step="10"></div>
+      <div class="ctl-actions">
+        <button class="act" id="btnRun">Running</button>
+        <button class="act ghost" id="btnStop">Pause</button>
+        <button class="act" id="btnFill">Fill to H</button>
+        <button class="act ghost" id="btnHydro">Hydrotest</button>
+        <button class="act ghost" id="btnDrain">Drain</button>
+        <button class="act ghost" id="btnThick">Thicker ▲</button>
+        <button class="act ghost" id="btnThin">Thinner ▼</button>
+        <button class="act ghost" id="btnAuto">Auto</button>
+        <button class="act ghost" id="btnReset">Reset schedule</button>
+        <button class="act ghost" id="btnRecord">Record reading</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="base">30 m × 14.4 m, A283 C, cone roof</button>
+          <button class="mini" data-preset="material">Same tank in A516 Gr 485</button>
+          <button class="mini" data-preset="ca">3 mm corrosion allowance</button>
+          <button class="mini" data-preset="heavy">Heavy product G 1.25</button>
+          <button class="mini" data-preset="hydro">Hydrotest on a fast clock</button>
+          <button class="mini" data-preset="tall">Tall open-top 12 m × 24 m</button>
+          <button class="mini" data-preset="wind">45 m open top in 230 km/h</button>
+          <button class="mini" data-preset="anchor">6 m × 14.4 m empty in wind</button>
+          <button class="mini" data-preset="selfroof">Self-supporting cone on 30 m</button>
+          <button class="mini" data-preset="dome">30 m dome roof</button>
+          <button class="mini" data-preset="big">70 m tank in A537</button>
+          <button class="mini" data-preset="small">10 m water tank</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2>Shell plate schedule · required against ordered, course by course</h2><span class="legend"><i class="sw water dim"></i>ordered <i class="sw brass"></i>product case td <i class="sw good"></i>hydrotest case tt <i class="sw ink"></i>required <i class="sw taps"></i>limits</span></div>
+      <canvas id="chart" width="900" height="290" aria-label="Plate schedule"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Stress utilisation · design and test cases against the allowables, live fill marker</h2><span class="legend"><i class="sw brass"></i>product / Sd <i class="sw good"></i>test / St <i class="sw water"></i>live fill</span></div>
+      <canvas id="schart" width="900" height="250" aria-label="Stress utilisation"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Steel against diameter at constant capacity</h2><span class="legend"><i class="sw water"></i>total steel <i class="sw steel"></i>shell only <i class="sw taps"></i>anchors needed <i class="sw brass"></i>girders needed <i class="sw good"></i>least steel</span></div>
+      <canvas id="trace" width="900" height="210" aria-label="Steel mass sweep"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Each reading stores the geometry, product, material, corrosion allowance, wind, roof, the plate schedule, bottom-course stresses and governing case, shell check, steel masses, capacity, roof plate, wind girders, anchorage, bottom type and the fill level.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="api650-tank.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Tag</th><th>D</th><th>Hs</th><th>H</th><th>G</th><th>Material</th><th>CA</th><th>Wind</th><th>Roof</th><th>n</th><th>Schedule mm</th><th>C1 governs</th><th>C1 σ prod</th><th>C1 σ test</th><th>Shell</th><th>Shell t</th><th>Total t</th><th>kg/m³</th><th>Cap m³</th><th>Roof mm</th><th>Roof ok</th><th>Girders</th><th>Anchors</th><th>Bottom</th><th>Level</th><th>Fluid</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>Shell thickness · the one-foot method (5.6.3)</h3><p class="eq">t<sub>d</sub> = 4.9 D (H − 0.3) G / S<sub>d</sub> + CA &nbsp;·&nbsp; t<sub>t</sub> = 4.9 D (H − 0.3) / S<sub>t</sub></p><p>Hoop stress in a thin cylinder is ρgh·D/2t; with D and H in metres and t in millimetres the constant comes out at 4.9. Each course is designed for the liquid height H from the bottom of that course to the design level, less 0.3 m (one foot), because the stiffer course below and the bottom restrain the first 300 mm. The product case uses the design stress and adds the corrosion allowance; the hydrostatic test case uses the test stress on the full plate, with water. The larger of the two, rounded up to a stocked plate and never below the minimum for the diameter, is ordered. The method is permitted for tanks up to 61 m in diameter; larger tanks use the variable-design-point method, which credits the restraint more exactly.</p></article>
+      <article><h3>Allowable stresses and minimums (5.6.1, Table 5-2)</h3><p class="eq">S<sub>d</sub> = lesser of ⅔ F<sub>y</sub> and ⅖ F<sub>u</sub> &nbsp;·&nbsp; S<sub>t</sub> = lesser of ¾ F<sub>y</sub> and 3/7 F<sub>u</sub></p><p>Design stress is two-thirds of yield or two-fifths of tensile, whichever is lower; test stress is a little higher because the water test is a one-off, controlled event. Minimum nominal thickness is 5 mm under 15 m diameter, 6 mm to 36 m, 8 mm to 60 m and 10 mm above, and no plate may exceed 45 mm. No course may be thinner than the course above it. Higher-strength plate cuts steel but brings tougher rules: stricter toughness, and butt-welded annular bottom plates.</p></article>
+      <article><h3>Bottom and annular plates (5.4, 5.5, Table 5-1)</h3><p class="eq">t<sub>b</sub> ≥ 6 mm + CA &nbsp;·&nbsp; annular width ≥ 600 mm and ≥ 215 t<sub>a</sub> / √(H G)</p><p>The bottom is lap-welded sketch plate at least 6 mm thick. Where the bottom course works hard — product stress above 160 MPa or test stress above 171 MPa, or a Group IV to VI material — a butt-welded annular ring under the shell is required. Its thickness comes from Table 5-1 as a function of the first-course thickness and stress, because the shell-to-bottom corner bends every time the tank is filled and emptied.</p></article>
+      <article><h3>Roofs (5.10)</h3><p class="eq">cone: t = D / (4.8 sin θ) · √(T / 2.2) + CA &nbsp;·&nbsp; dome: t = r<sub>r</sub> / 2.4 · √(T / 2.2) + CA &nbsp;·&nbsp; ring force = T D² / (8 tan θ)</p><p>A supported cone rests on rafters and columns and needs only 5 mm plate plus allowance at a slope of at least 1:16. A self-supporting cone (9.5° to 37°) or dome (radius 0.8 D to 1.2 D) carries the load T — plate weight plus the greater of the 1.0 kPa minimum live load and snow — as a shell, and its plate grows with the diameter until the 13 mm ceiling makes it impractical above roughly 20 m. The roof thrusts outward at the shell junction, so a compression ring of participating area at the top angle must carry the hoop force T D²/(8 tan θ). The area shown is indicative at 0.6 F<sub>y</sub>.</p></article>
+      <article><h3>Wind girders (5.9.6, 5.9.7)</h3><p class="eq">H<sub>1</sub> = 9.47 t √(t/D)³ (190/V)² &nbsp;·&nbsp; W<sub>tr</sub> = W (t<sub>top</sub>/t)<sup>2.5</sup> &nbsp;·&nbsp; Z = D² H / 17 · (V/190)²</p><p>An empty shell is a thin can that wind buckles. H<sub>1</sub> is the tallest unstiffened height of shell at the top-course thickness that resists the design wind. Each thicker course is converted to an equivalent height of top-course plate, the transformed shell is summed, and if it exceeds H<sub>1</sub> an intermediate girder goes at the transformed mid-height (two at the third points, and so on), then mapped back to the real shell. Open-top tanks also need a top girder of the section modulus Z.</p></article>
+      <article><h3>Overturning and anchorage (5.11)</h3><p class="eq">0.6 M<sub>w</sub> &lt; M<sub>DL</sub>/1.5 + M<sub>DLR</sub> &nbsp;·&nbsp; M<sub>w</sub> &lt; (M<sub>DL</sub> + M<sub>F</sub>)/2 + M<sub>DLR</sub> &nbsp;·&nbsp; w<sub>L</sub> = 59 t<sub>b</sub> √(F<sub>y</sub> H) ≤ 70.4 H D</p><p>Wind pushes on the shell at 0.86 kPa (V/190)² and lifts the roof at 1.44 kPa (V/190)². The overturning moment is resisted by the weight of the shell and roof, and, when the tank is full, by an annulus of liquid near the shell that the bottom plate can hold down before it lifts (w<sub>L</sub>). A small, tall, empty tank in a strong wind fails the first test and must be anchored; anchor chairs and bolts then take the net uplift. Seismic overturning (Annex E) follows the same logic with impulsive and convective liquid masses.</p></article>
+      <article><h3>Steel against diameter</h3><p>For a fixed capacity a squat tank has a thin shell but a large bottom and roof; a tall one has a small footprint but thick lower courses, wind girders and, eventually, anchors. The sweep chart designs every diameter from 6 m to 90 m (shell height up to 30 m) with the same rules and the same freeboard and shows where the steel is least. Real optimisation adds foundation cost, land, roof framing, seismic sloshing height and the plate widths the mill can supply.</p></article>
+      <article><h3>About the numbers</h3><p>[Illustrative data, for training only.] Allowable stresses, groups, minimums, annular plate table, roof and wind-girder formulas and the stability criteria follow the SI form of API 650 as commonly taught; clause numbers are given as a guide and must be checked against the edition in force. Roof framing masses, the top-ring allowance, the 0.6 F<sub>y</sub> ring stress and the column count are assumptions. Internal pressure (Annex F), seismic design (Annex E), shell openings and nozzle reinforcement, plate toughness and weld details are outside this demonstrator. Nothing here replaces a design by a competent engineer.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the demonstrator</h2>
+    <ul>
+      <li><b>Size the tank</b>: diameter, number and height of courses, design liquid level, product gravity, corrosion allowance and material. The plate schedule, steel mass and every check update at once; the elevation shows each course with its ordered thickness.</li>
+      <li><b>Read the charts</b>: the schedule chart shows required against ordered per course and which case governs; the utilisation chart shows product and test stresses against the allowables; the sweep shows the steel needed at every diameter for this capacity.</li>
+      <li><b>Override</b>: click a course, then Thicker / Thinner (or the arrow keys) to set the plate by hand and see the checks fail or pass. Auto returns that course to the calculated plate.</li>
+      <li><b>Roof and wind</b>: choose a roof and slope, set the wind. Watch for intermediate girders, the anchorage verdict and roof feasibility.</li>
+      <li><b>Fill and test</b>: Fill to H with product, or Hydrotest with water, on a fast clock. The live stress in every course is drawn on the shell and on the utilisation chart.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>Space</kbd> run / pause · <kbd>F</kbd> fill · <kbd>W</kbd> hydrotest · <kbd>E</kbd> drain · <kbd>↑</kbd>/<kbd>↓</kbd> thicker / thinner on the selected course · <kbd>A</kbd> auto · <kbd>R</kbd> record · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

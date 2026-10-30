@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cavitation Trainer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 05</span>
+    <h1>Cavitation Trainer</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Pump stopped</span>
+    <span class="pill" id="pillNpsh">NPSH margin —</span>
+    <span class="pill amber hidden" id="pillIncip">Incipient cavitation — audible</span>
+    <span class="pill warn hidden" id="pillCav">Developed cavitation — head falling</span>
+    <span class="pill warn hidden" id="pillSevere">Severe — vapour lock</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnSound">Enable sound</button>
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Transparent pump with instrumented suction line">
+    <div class="rig-head">
+      <h2>Transparent suction and impeller section</h2>
+      <span class="legend"><i class="sw water"></i>liquid <i class="sw vap"></i>vapour <i class="sw brass"></i>suction throttle <i class="sw taps"></i>sensors</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+    <div class="readouts" id="readouts"></div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head">
+        <h2>NPSH test · head against available NPSH</h2>
+        <span class="legend"><i class="sw water"></i>predicted drop-off at this flow <i class="sw ink"></i>recorded points <i class="sw taps"></i>3 % head drop = NPSH<sub>3</sub></span>
+      </div>
+      <canvas id="chart" width="900" height="360" aria-label="Pump head against net positive suction head available"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head">
+        <h2>Last 40 s · head, vibration and sound together</h2>
+        <span class="legend"><i class="sw water"></i>head <i class="sw brass"></i>vibration RMS <i class="sw good"></i>sound level</span>
+      </div>
+      <canvas id="strip" width="900" height="220" aria-label="Time history of head, vibration and acoustic level"></canvas>
+    </div>
+
+    <div class="controls">
+      <div class="ctl">
+        <label for="throttle">Suction throttle opening <output id="throttleOut">100 %</output></label>
+        <input type="range" id="throttle" min="8" max="100" value="100" step="1">
+        <div class="ctl-foot"><span>Close it slowly and watch the vacuum gauge</span><span class="btns"><button class="mini" data-th="100">Open</button><button class="mini" data-th="60">60 %</button><button class="mini" data-th="35">35 %</button><button class="mini" data-th="20">20 %</button></span></div>
+      </div>
+      <div class="ctl">
+        <label for="temp">Fluid temperature <output id="tempOut">20 °C</output></label>
+        <input type="range" id="temp" min="10" max="95" value="20" step="1">
+        <div class="ctl-foot"><span>Warm liquid has a higher vapour pressure</span><span class="btns"><button class="mini" data-temp="20">20 °C</button><button class="mini" data-temp="60">60 °C</button><button class="mini" data-temp="85">85 °C</button></span></div>
+      </div>
+      <div class="ctl">
+        <label for="lift">Liquid level relative to pump eye <output id="liftOut">+0.5 m</output></label>
+        <input type="range" id="lift" min="-4" max="2" value="0.5" step="0.1">
+        <div class="ctl-foot"><span>Negative = suction lift from a tank below the pump</span></div>
+      </div>
+      <div class="ctl">
+        <label for="speed">Pump speed <output id="speedOut">100 %</output></label>
+        <input type="range" id="speed" min="0" max="100" value="100" step="1">
+        <div class="ctl-foot"><span id="rpmOut">2900 rpm</span><span class="btns"><button class="mini" data-speed="0">Stop</button><button class="mini" data-speed="70">70 %</button><button class="mini" data-speed="100">100 %</button></span></div>
+      </div>
+      <div class="ctl two">
+        <div>
+          <label for="dvalve">Discharge valve (sets the test flow) <output id="dvalveOut">70 %</output></label>
+          <input type="range" id="dvalve" min="10" max="100" value="70" step="1">
+        </div>
+        <div class="ctl-actions">
+          <button class="act" id="btnRecord">Record NPSH point</button>
+          <button class="act" id="btnSweep">Auto-run NPSH test</button>
+          <button class="act ghost" id="btnReset">Reset</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="data" role="tab">Readouts</button>
+    <button class="tab" data-tab="spec" role="tab">Vibration spectrum</button>
+    <button class="tab" data-tab="log" role="tab">NPSH log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="samples" role="tab">Damaged impellers — diagnose</button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+
+  <div class="tabpanel on" id="tab-data"><div class="grid-data" id="dataGrid"></div></div>
+
+  <div class="tabpanel" id="tab-spec">
+    <p class="note">Accelerometer on the pump bearing housing. Discrete peaks at 1× running speed and vane-pass frequency are normal; cavitation shows up as a rising broadband floor and random high-frequency energy, not a new peak.</p>
+    <canvas id="spectrum" width="900" height="260" aria-label="Vibration spectrum"></canvas>
+  </div>
+
+  <div class="tabpanel" id="tab-log">
+    <div class="log-tools">
+      <span>Each row is one point of an NPSH test: hold the discharge valve fixed, reduce NPSH<sub>a</sub> step by step, record. Auto-run does this for you.</span>
+      <span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="cavitation-npsh-test.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span>
+    </div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Throttle %</th><th>T °C</th><th>Level m</th><th>Suction kPa(g)</th><th>NPSHa m</th><th>NPSHr m</th><th>Q m³/h</th><th>H m</th><th>Head drop %</th><th>Vib mm/s</th><th>Sound dB</th></tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div class="tabpanel" id="tab-samples">
+    <div class="samples-head">
+      <p class="note">Four impellers removed from service. Inspect each sample and its evidence cards, then name the damage mechanism. Feedback explains the distinguishing features. Samples are shuffled each time.</p>
+      <span class="btns"><button class="mini" id="btnShuffle">New set</button><span class="pill" id="diagScore">0 / 4 diagnosed</span></span>
+    </div>
+    <div class="samples" id="samples"></div>
+  </div>
+
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article>
+        <h3>What NPSH actually is</h3>
+        <p class="eq">NPSH<sub>a</sub> = p<sub>atm</sub>/ρg + z − h<sub>suction losses</sub> − p<sub>vapour</sub>/ρg</p>
+        <p>The absolute pressure head at the pump eye, above the liquid's vapour pressure. Anything that lowers eye pressure (suction lift, a throttled suction line, a fouled strainer) or raises vapour pressure (temperature) eats into it. The pump needs a minimum, NPSH<sub>r</sub>, which rises with flow and with the square of speed.</p>
+      </article>
+      <article>
+        <h3>Inception before the head drops</h3>
+        <p>Bubbles start forming and collapsing while the margin is still positive: you hear the crackle and see the accelerometer floor rise well before the head–flow performance changes. NPSH<sub>3</sub>, the value at which head has fallen 3 %, is a test convention, not the start of damage. Damage rates are often highest at margins just above NPSH<sub>3</sub>, where bubbles are still collapsing on metal instead of filling the impeller.</p>
+      </article>
+      <article>
+        <h3>Why it is loud and why it vibrates</h3>
+        <p>Each vapour bubble collapses in microseconds, driving a liquid micro-jet at the surface. Thousands per second give the gravel-in-the-pump sound and a broadband, random vibration signature. A mechanical fault gives a discrete peak; cavitation raises the whole floor.</p>
+      </article>
+      <article>
+        <h3>Telling the four damage mechanisms apart</h3>
+        <p><b>Cavitation:</b> sponge-like pitting on the suction (low-pressure) side of the vane leading edge, near the eye; clean metal elsewhere; history of low NPSH margin. <b>Suction recirculation:</b> similar pitting but on the pressure side of the vane inlet and on the shroud at the eye; history of running well below BEP with NPSH margin fine. <b>Erosion:</b> smooth, polished, directional grooves following the flow, thinned vane tips; abrasive solids in the fluid. <b>Corrosion:</b> uniform roughening and pitting on all wetted surfaces including ones the flow never scours, discolouration, aggressive fluid chemistry.</p>
+      </article>
+      <article>
+        <h3>About the rig data</h3>
+        <p>[Illustrative rig data, for training only.] Same 4 kW pump as the other benches (shut-off 32 m, BEP 24 m³/h at 2 900 rpm, NPSH<sub>r</sub> = 1.5 + 0.004·Q² m at rated speed). Vibration and sound levels are representative shapes, not calibrated instrument data.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the trainer</h2>
+    <ul>
+      <li><b>Enable sound</b> (top right) so the pump hum and the cavitation crackle play through the speakers.</li>
+      <li><b>Set a test flow</b> with the discharge valve, then reduce NPSH<sub>a</sub> progressively: close the suction throttle, warm the fluid, or lower the liquid level.</li>
+      <li><b>Watch everything at once:</b> the vacuum gauge falls, bubbles appear at the impeller eye, the microphone level and accelerometer RMS rise, and finally the head and flow drop. The time strip shows the order in which they happen.</li>
+      <li><b>Record points</b> as you go, or auto-run the test, to build the classic head-versus-NPSH<sub>a</sub> curve and find NPSH<sub>3</sub>.</li>
+      <li><b>Diagnose the impellers</b> in the drawer: four samples, four mechanisms, evidence cards, feedback.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>←</kbd><kbd>→</kbd> suction throttle · <kbd>↑</kbd><kbd>↓</kbd> temperature · <kbd>R</kbd> record · <kbd>S</kbd> auto-run · <kbd>M</kbd> sound · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

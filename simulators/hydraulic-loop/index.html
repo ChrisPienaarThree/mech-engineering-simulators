@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hydraulic Loop Bench</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 01</span>
+    <h1>Hydraulic Loop Bench</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Pump stopped</span>
+    <span class="pill" id="pillPoint">Operating point —</span>
+    <span class="pill warn hidden" id="pillDead">Dead-head</span>
+    <span class="pill warn hidden" id="pillCav">Cavitation</span>
+    <span class="pill warn hidden" id="pillOver">Motor overload</span>
+    <span class="pill warn hidden" id="pillRunout">Run-out</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Transparent recirculating hydraulic loop">
+    <div class="rig-head">
+      <h2>Transparent recirculating loop</h2>
+      <span class="legend"><i class="sw water"></i>fluid <i class="sw brass"></i>control valve <i class="sw taps"></i>ΔP tapping points</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+    <div class="readouts" id="readouts"></div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head">
+        <h2>Head – flow diagram</h2>
+        <span class="legend"><i class="sw water"></i>pump curve at set speed <i class="sw water dim"></i>rated speed <i class="sw brass"></i>system curve <i class="sw good"></i>efficiency</span>
+      </div>
+      <canvas id="chart" width="900" height="520" aria-label="Pump and system curves with the operating point"></canvas>
+    </div>
+
+    <div class="controls">
+      <div class="ctl">
+        <label for="speed">Motor speed <output id="speedOut">0 %</output></label>
+        <input type="range" id="speed" min="0" max="100" value="0" step="1">
+        <div class="ctl-foot"><span id="rpmOut">0 rpm</span><span class="btns"><button class="mini" data-speed="0">Stop</button><button class="mini" data-speed="50">50 %</button><button class="mini" data-speed="80">80 %</button><button class="mini" data-speed="100">100 %</button></span></div>
+      </div>
+      <div class="ctl">
+        <label for="valve">Control valve opening <output id="valveOut">50 %</output></label>
+        <input type="range" id="valve" min="0" max="100" value="50" step="1">
+        <div class="ctl-foot"><span id="kvOut">Kv —</span><span class="btns"><button class="mini" data-valve="0">Shut</button><button class="mini" data-valve="25">25 %</button><button class="mini" data-valve="50">50 %</button><button class="mini" data-valve="100">Open</button></span></div>
+      </div>
+      <div class="ctl two">
+        <div>
+          <label for="pipe">Test-section pipe</label>
+          <select id="pipe">
+            <option value="25">DN25 — 27.3 mm bore</option>
+            <option value="32">DN32 — 36.0 mm bore</option>
+            <option value="40" selected>DN40 — 41.9 mm bore</option>
+            <option value="50">DN50 — 53.1 mm bore</option>
+          </select>
+        </div>
+        <div>
+          <label for="length">Test-section length <output id="lengthOut">8 m</output></label>
+          <input type="range" id="length" min="2" max="20" value="8" step="1">
+        </div>
+      </div>
+      <div class="ctl two">
+        <div>
+          <label for="temp">Fluid temperature <output id="tempOut">20 °C</output></label>
+          <input type="range" id="temp" min="10" max="85" value="20" step="1">
+        </div>
+        <div>
+          <label for="strainer">Suction strainer fouling <output id="strainerOut">0 %</output></label>
+          <input type="range" id="strainer" min="0" max="100" value="0" step="1">
+        </div>
+      </div>
+      <div class="ctl two">
+        <div>
+          <label for="level">Reservoir level above pump <output id="levelOut">0.8 m</output></label>
+          <input type="range" id="level" min="0.1" max="1.5" value="0.8" step="0.05">
+        </div>
+        <div class="ctl-actions">
+          <button class="act" id="btnRecord">Record point</button>
+          <button class="act" id="btnSweep">Auto-sweep valve</button>
+          <button class="act ghost" id="btnReset">Reset rig</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="data" role="tab">Readouts</button>
+    <button class="tab" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+
+  <div class="tabpanel on" id="tab-data">
+    <div class="grid-data" id="dataGrid"></div>
+  </div>
+
+  <div class="tabpanel" id="tab-log">
+    <div class="log-tools">
+      <span>Each recorded point is one row. Auto-sweep records the whole valve travel at the set speed, which traces the pump curve.</span>
+      <span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="hydraulic-loop-log.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span>
+    </div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Speed %</th><th>rpm</th><th>Valve %</th><th>Pipe</th><th>Q m³/h</th><th>H m</th><th>P1 bar</th><th>P2 bar</th><th>ΔP pipe kPa</th><th>ΔP valve kPa</th><th>η %</th><th>P elec kW</th><th>NPSH margin m</th></tr></thead><tbody></tbody></table></div>
+  </div>
+
+  <div class="tabpanel" id="tab-tasks">
+    <ol class="tasks" id="tasks"></ol>
+  </div>
+
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article>
+        <h3>Where the operating point comes from</h3>
+        <p>The pump can only run where its own curve meets the system curve. Change the speed and the pump curve moves; change the valve, the pipe or the length and the system curve moves. The intersection is the only steady state.</p>
+        <p class="eq">H<sub>pump</sub>(Q) = H<sub>static</sub> + (f·L/D + ΣK)·v²/2g + (Q/K<sub>v</sub>)²·10⁵/ρg</p>
+      </article>
+      <article>
+        <h3>Affinity laws (speed change)</h3>
+        <p class="eq">Q ∝ N &nbsp;·&nbsp; H ∝ N² &nbsp;·&nbsp; P ∝ N³</p>
+        <p>Halving the speed gives half the flow, a quarter of the head and an eighth of the power. This is why speed control usually beats throttling for part-load duty.</p>
+      </article>
+      <article>
+        <h3>Pipe friction (Darcy–Weisbach)</h3>
+        <p class="eq">h<sub>f</sub> = f · (L/D) · v²/2g &nbsp;&nbsp; v = Q/A &nbsp;&nbsp; Re = ρvD/μ</p>
+        <p>For a fixed flow, the velocity rises with 1/D², so friction loss rises roughly with 1/D⁵. Swapping DN50 for DN25 is not twice as hard to push through: it is about thirty times harder.</p>
+      </article>
+      <article>
+        <h3>Control valve</h3>
+        <p class="eq">ΔP<sub>bar</sub> = (Q<sub>m³/h</sub> / K<sub>v</sub>)² &nbsp;&nbsp; K<sub>v</sub>(x) = K<sub>v100</sub> · R<sup>(x−1)</sup></p>
+        <p>An equal-percentage globe valve: each equal step of stem travel multiplies the flow coefficient by the same ratio. Most of the authority sits in the first third of travel.</p>
+      </article>
+      <article>
+        <h3>NPSH and cavitation</h3>
+        <p class="eq">NPSH<sub>a</sub> = p<sub>atm</sub>/ρg + z<sub>s</sub> − h<sub>suction losses</sub> − p<sub>vapour</sub>/ρg</p>
+        <p>Warm fluid raises the vapour pressure; a fouled strainer eats the suction head. When the available margin drops below what the pump requires, vapour bubbles form at the impeller eye and the head collapses.</p>
+      </article>
+      <article>
+        <h3>About the pump data</h3>
+        <p>[Illustrative pump data, for training only.] Shut-off head 32 m at 2 900 rpm, best-efficiency point 24 m³/h at 72 %, run-out about 47 m³/h, 4 kW motor. The reservoir is open to atmosphere, so the loop's static head is only the return-pipe outlet height above the free surface.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the bench</h2>
+    <ul>
+      <li><b>Start the pump</b> with the speed slider. Watch the impeller, the flow in the clear pipe and the gauges respond. The motor ramps rather than jumping.</li>
+      <li><b>Throttle the valve</b> and watch the system curve steepen and the operating point slide up the pump curve to lower flow and higher head.</li>
+      <li><b>Swap the pipe</b> to a smaller bore: the same effect as throttling, but you cannot undo it from the control room.</li>
+      <li><b>Reduce speed instead of throttling</b> to reach the same flow and compare the electrical power. That difference is the whole argument for variable-speed drives.</li>
+      <li><b>Break it on purpose.</b> Shut the valve with the pump running (dead-head), heat the fluid and foul the strainer (cavitation), or open everything with DN50 fitted (run-out and overload). Every failure is shown, not just the success.</li>
+      <li><b>Record points</b> or auto-sweep to build a table you can copy into a spreadsheet.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>↑</kbd><kbd>↓</kbd> speed · <kbd>←</kbd><kbd>→</kbd> valve · <kbd>R</kbd> record · <kbd>S</kbd> sweep · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

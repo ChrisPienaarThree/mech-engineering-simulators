@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bolted Joint and Torque Bench</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 19</span>
+    <h1>Bolted Joint and Torque Bench</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Running</span>
+    <span class="pill" id="pillState">—</span>
+    <span class="pill" id="pillJoint">—</span>
+    <span class="pill warn hidden" id="pillSep">JOINT SEPARATED</span>
+    <span class="pill warn hidden" id="pillYield">Bolt yielded</span>
+    <span class="pill warn hidden" id="pillFat">Bolt fatigue factor below 1</span>
+    <span class="pill amber hidden" id="pillScatter">Scatter can reach proof load</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Bolted joint cross-section">
+    <div class="rig-head">
+      <h2 id="rigTitle">One bolt, two plates · cross-section with the external load pulling the joint apart</h2>
+      <span class="legend"><i class="sw taps"></i>clamp force <i class="sw brass"></i>external load <i class="sw water"></i>bolt <i class="sw good"></i>gasket</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="readouts">
+      <div class="ro"><span class="k">Bolt</span><span class="v" id="roBolt">—</span><span class="u">At <span id="roAt">—</span> mm² · proof load <span id="roFp">—</span> kN</span></div>
+      <div class="ro" id="roCBox"><span class="k">Stiffness ratio C</span><span class="v" id="roC">—</span><span class="u">kb <span id="roKb">—</span> · km <span id="roKm">—</span> kN/mm</span></div>
+      <div class="ro" id="roFiTBox"><span class="k">Preload from this setting</span><span class="v" id="roFiT">—</span><span class="u">kN nominal · scatter <span id="roFiMin">—</span>–<span id="roFiMax">—</span></span></div>
+      <div class="ro"><span class="k">Preload now</span><span class="v" id="roFi">—</span><span class="u">kN · embedding lost <span id="roEmb">0</span> · <span id="roFiPct">—</span> % of proof</span></div>
+      <div class="ro" id="roFbBox"><span class="k">Bolt load</span><span class="v" id="roFb">—</span><span class="u">kN · <span id="roSb">—</span> MPa · <span id="roSbPct">—</span> % of proof</span></div>
+      <div class="ro" id="roFmBox"><span class="k">Clamp on the members</span><span class="v" id="roFm">—</span><span class="u">kN remaining</span></div>
+      <div class="ro" id="roP0Box"><span class="k">Separation load</span><span class="v" id="roP0">—</span><span class="u">kN · margin <span id="roNsep">—</span> on the maximum load</span></div>
+      <div class="ro" id="roNyBox"><span class="k">Proof-load factor</span><span class="v" id="roNy">—</span><span class="u">at maximum load</span></div>
+      <div class="ro" id="roNfBox"><span class="k">Bolt fatigue factor</span><span class="v" id="roNf">—</span><span class="u">Goodman, rolled thread · σa <span id="roSa">—</span> MPa</span></div>
+      <div class="ro"><span class="k">Recommended torque</span><span class="v" id="roTrec">—</span><span class="u">N·m for 75 % proof · tightenings <span id="roTight">0</span></span></div>
+    </div>
+
+    <div class="controls">
+      <div class="grp-title">Bolt and joint</div>
+      <div class="ctl"><label>Bolt size <select id="size"><option>M6</option><option>M8</option><option>M10</option><option selected>M12</option><option>M16</option><option>M20</option><option>M24</option></select></label></div>
+      <div class="ctl"><label>Property class <select id="grade"><option selected>8.8</option><option>10.9</option><option>12.9</option></select></label></div>
+      <div class="ctl"><label for="grip">Grip length (two equal plates) <output id="gripOut">40 mm</output></label><input type="range" id="grip" min="10" max="150" value="40" step="2"></div>
+      <div class="ctl"><label>Member material <select id="memb"><option value="steel" selected>Steel</option><option value="iron">Cast iron</option><option value="alu">Aluminium</option></select></label></div>
+      <div class="ctl"><label>Gasket <select id="gasket"><option value="none" selected>None (metal to metal)</option><option value="fibre">Compressed fibre sheet 1.5 mm</option><option value="spiral">Spiral-wound 4.5 mm</option><option value="ptfe">PTFE sheet 2 mm</option><option value="rubber">Rubber sheet 3 mm</option></select></label></div>
+      <div class="ctl"><label>Surface condition (embedding) <select id="surf"><option value="machined" selected>Machined, clean · 4 µm</option><option value="rough">Rough / hot rolled · 9 µm</option><option value="painted">Painted · 16 µm</option></select></label></div>
+      <div class="grp-title">Tightening</div>
+      <div class="ctl"><label>Method <select id="method"><option value="torque" selected>Torque wrench</option><option value="angle">Turn of nut (angle) ±10 %</option><option value="stretch">Bolt stretch (ultrasonic) ±3 %</option></select></label></div>
+      <div class="ctl" id="ctlT"><label for="T">Wrench torque <output id="TOut">90 N·m</output></label><input type="range" id="T" min="5" max="800" value="90" step="5"></div>
+      <div class="ctl off" id="ctlTarget"><label for="target">Target preload <output id="targetOut">75 % of proof</output></label><input type="range" id="target" min="30" max="100" value="75" step="5"></div>
+      <div class="ctl"><label>Thread lubrication (torque coefficient K) <select id="lube"><option value="dry">Dry, black oxide · K 0.30 ±35 %</option><option value="zinc" selected>Zinc plated · K 0.20 ±25 %</option><option value="oil">Oiled · K 0.18 ±20 %</option><option value="moly">MoS₂ anti-seize · K 0.12 ±15 %</option></select></label></div>
+      <div class="grp-title">External load</div>
+      <div class="ctl"><label for="Pmax">Maximum load <output id="PmaxOut">20 kN</output></label><input type="range" id="Pmax" min="0" max="200" value="20" step="1"></div>
+      <div class="ctl"><label for="Pmin">Minimum load (cyclic) <output id="PminOut">5 kN</output></label><input type="range" id="Pmin" min="0" max="200" value="5" step="1"></div>
+      <div class="ctl"><label for="fload">Load frequency <output id="floadOut">1.0 Hz</output></label><input type="range" id="fload" min="0.2" max="5" value="1" step="0.1"></div>
+      <div class="ctl"><label for="nload">Load introduction factor n <output id="nloadOut">0.50</output></label><input type="range" id="nload" min="0.2" max="1" value="0.5" step="0.05"></div>
+      <div class="ctl"><label for="tscale">Embedding clock <output id="tscaleOut">×1</output></label><input type="range" id="tscale" min="1" max="20" value="1" step="1"></div>
+      <div class="ctl-actions">
+        <button class="act" id="btnRun">Running</button>
+        <button class="act ghost" id="btnStop">Pause</button>
+        <button class="act" id="btnTighten">Tighten</button>
+        <button class="act ghost" id="btnMany">Tighten 20 bolts</button>
+        <button class="act ghost" id="btnLoosen">Loosen</button>
+        <button class="act ghost" id="btnCyc">Cyclic load: off</button>
+        <button class="act ghost" id="btnRecord">Record reading</button>
+        <button class="act ghost" id="btnClearS">Clear samples</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="base">M12 8.8, 90 N·m, zinc plated</button>
+          <button class="mini" data-preset="scatter">20 bolts, dry threads</button>
+          <button class="mini" data-preset="lube">Same torque, MoS₂ → yield</button>
+          <button class="mini" data-preset="gasket">Rubber gasket</button>
+          <button class="mini" data-preset="embed">Painted surfaces, embedding</button>
+          <button class="mini" data-preset="separate">Overload → separation</button>
+          <button class="mini" data-preset="fatigue">Cyclic load on a soft joint</button>
+          <button class="mini" data-preset="stretch">20 bolts by stretch</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2>Joint diagram · bolt stretch against member compression, preload and load partition</h2><span class="legend"><i class="sw water"></i>bolt <i class="sw good"></i>members <i class="sw brass"></i>external load <i class="sw taps"></i>proof</span></div>
+      <canvas id="chart" width="900" height="290" aria-label="Joint diagram"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Torque against tension · scatter of tightenings</h2><span class="legend"><i class="sw water"></i>K nominal and limits <i class="sw taps"></i>torque wrench <i class="sw good"></i>angle / stretch</span></div>
+      <canvas id="schart" width="900" height="250" aria-label="Torque-tension scatter"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2 id="traceTitle">Loads · bolt, clamp, external and preload over time</h2></div>
+      <canvas id="trace" width="900" height="190" aria-label="Load traces"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Each reading stores bolt, grip, gasket, method, lubrication, torque, the sampled K, stiffnesses, C, nominal and actual preload, embedding loss, loads, bolt and clamp loads, separation load and the factors. Every tightening and yield is logged automatically.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="bolted-joint.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Tag</th><th>Bolt</th><th>Grip</th><th>Gasket</th><th>Method</th><th>Lube</th><th>T N·m</th><th>K</th><th>kb</th><th>km</th><th>C</th><th>Fi nom</th><th>Fi</th><th>Embed</th><th>Pmax</th><th>Fb</th><th>Fm</th><th>P sep</th><th>n proof</th><th>n fatigue</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>Stiffness and the joint diagram</h3><p class="eq">k<sub>b</sub> = A<sub>d</sub>A<sub>t</sub>E / (A<sub>d</sub>l<sub>t</sub> + A<sub>t</sub>l<sub>d</sub>) &nbsp;·&nbsp; C = k<sub>b</sub> / (k<sub>b</sub> + k<sub>m</sub>) &nbsp;·&nbsp; F<sub>b</sub> = F<sub>i</sub> + C P &nbsp;·&nbsp; F<sub>m</sub> = F<sub>i</sub> − (1 − C) P</p><p>Tightening stretches the bolt and squeezes the members by the same force. An external load then stretches the bolt a little more and lets the members relax by the same amount, so the load is shared in the ratio of the stiffnesses. Because the members are usually five to ten times stiffer than the bolt, the bolt sees only a small fraction C of the external load — until the members are fully unloaded and the joint separates.</p></article>
+      <article><h3>Member stiffness</h3><p class="eq">k<sub>m</sub> = 0.5774 π E d / ln[(1.155 t + 0.5 d)(2.5 d) / ((1.155 t + 2.5 d)(0.5 d))] per frustum</p><p>The clamped material acts as a pair of 30° cones of pressure under the head and nut. A soft gasket in series with those cones collapses the member stiffness, raises C and hands most of the load to the bolt — good for sealing, bad for bolt fatigue.</p></article>
+      <article><h3>Torque and tension</h3><p class="eq">T = K F<sub>i</sub> d &nbsp;·&nbsp; F<sub>i</sub> ≈ 0.75 F<sub>p</sub> (reusable) &nbsp;·&nbsp; F<sub>p</sub> = S<sub>p</sub> A<sub>t</sub></p><p>Roughly 90 % of the wrench torque is spent on thread and face friction; only the rest stretches the bolt. K bundles that friction. It changes with plating, oil and dirt, and it scatters ±25–35 % between nominally identical bolts, so torque gives preload only approximately. A torque set for dry threads on a lubricated bolt can push the bolt past proof. Turn-of-nut and stretch methods bypass friction and cut the scatter.</p></article>
+      <article><h3>Embedding</h3><p class="eq">ΔF = f<sub>z</sub> · k<sub>b</sub>k<sub>m</sub> / (k<sub>b</sub> + k<sub>m</sub>)</p><p>After tightening, the microscopic peaks on every interface flatten under load, releasing a few micrometres of the joint's stretch. In a short, stiff joint a few micrometres are a large share of the total elongation, so preload sags — more so with paint, rough surfaces or gaskets. Re-torquing after bedding-in, or longer bolts, are the usual answers.</p></article>
+      <article><h3>Separation, yield and fatigue</h3><p class="eq">P<sub>0</sub> = F<sub>i</sub> / (1 − nC) &nbsp;·&nbsp; n<sub>p</sub> = F<sub>p</sub> / (F<sub>i</sub> + nC P) &nbsp;·&nbsp; n<sub>f</sub> = S<sub>e</sub>(S<sub>u</sub> − σ<sub>i</sub>) / [σ<sub>a</sub>(S<sub>u</sub> + S<sub>e</sub>)]</p><p>Preload must be high enough to keep the joint closed at the maximum load, yet low enough that the bolt does not pass its proof load. With a cyclic load the bolt alternating stress is only the C-share of the load range, which is why a well-preloaded stiff joint almost never fatigues and a loose or gasketed one does. The load introduction factor n accounts for where the load enters the clamped stack.</p></article>
+      <article><h3>About the numbers</h3><p>[Illustrative data, for training only.] Proof, yield and tensile strengths and the rolled-thread endurance limits follow ISO property classes; torque coefficients and their scatter are typical values; the scatter is drawn from a triangular distribution; gasket moduli are apparent values; embedding amounts are typical per interface. Real joints are validated by measurement.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the bench</h2>
+    <ul>
+      <li><b>Build the joint</b>: bolt size and class, grip, member material, gasket and surface condition. The readouts show stiffnesses and C at once.</li>
+      <li><b>Tighten</b>: choose the method and lubrication, set the torque (or the target preload) and press Tighten. Each tightening draws a random K from the scatter band; Tighten 20 bolts fills the torque–tension chart with dots.</li>
+      <li><b>Load it</b>: set the maximum and minimum load and switch the cyclic load on. Watch the joint diagram partition the load, the clamp fall, the separation and proof margins, and the bolt fatigue factor.</li>
+      <li><b>Embedding</b> sags the preload in the first minute after tightening; speed it up with the clock. Record readings to compare joints in the tasks.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>Space</kbd> run / pause · <kbd>T</kbd> tighten · <kbd>M</kbd> tighten 20 · <kbd>L</kbd> loosen · <kbd>C</kbd> cyclic load · <kbd>R</kbd> record · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

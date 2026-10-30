@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gearbox Tooth Loads and Efficiency Bench</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 25</span>
+    <h1>Gearbox Tooth Loads and Efficiency Bench</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Running</span>
+    <span class="pill ok" id="pillState">—</span>
+    <span class="pill" id="pillMode">—</span>
+    <span class="pill warn hidden" id="pillScuff">Scuffing</span>
+    <span class="pill warn hidden" id="pillPit">Contact stress above allowable</span>
+    <span class="pill amber hidden" id="pillUnder">Pinion undercut</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Gear pair with tooth forces">
+    <div class="rig-head">
+      <h2 id="rigTitle">Spur gear pair · tooth forces at the pitch point</h2>
+      <span class="legend"><i class="sw taps"></i>tangential Wt <i class="sw deep"></i>radial Wr <i class="sw steel"></i>pinion <i class="sw brass"></i>gear</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="readouts">
+      <div class="ro"><span class="k">Ratio and output</span><span class="v" id="roU">—</span><span class="u"><span id="roN2">—</span> rpm · <span id="roT2">—</span> N·m out</span></div>
+      <div class="ro"><span class="k">Pitch line velocity</span><span class="v" id="roV">—</span><span class="u">m/s · d₁ <span id="roD1">—</span> · d₂ <span id="roD2">—</span> mm</span></div>
+      <div class="ro"><span class="k">Tooth forces</span><span class="v" id="roWt">—</span><span class="u">kN tangential · radial <span id="roWr">—</span> · axial <span id="roWa">—</span> kN</span></div>
+      <div class="ro" id="roSbBox"><span class="k">Bending stress</span><span class="v" id="roSb">—</span><span class="u">MPa (Lewis, Y <span id="roY">—</span>) · safety <span id="roSFb">—</span></span></div>
+      <div class="ro" id="roSHBox"><span class="k">Contact stress</span><span class="v" id="roSH">—</span><span class="u">MPa (Hertz) · safety <span id="roSFH">—</span> · pitting life <span id="roLh">—</span> h</span></div>
+      <div class="ro"><span class="k">Contact ratio</span><span class="v" id="roEa">—</span><span class="u">transverse εα · overlap εβ <span id="roEb">—</span> · Kv <span id="roKv">—</span></span></div>
+      <div class="ro" id="roEtaBox"><span class="k">Efficiency</span><span class="v" id="roEta">—</span><span class="u">% · losses <span id="roLoss">—</span> kW (mesh <span id="roMesh">—</span>, churning <span id="roChurn">—</span>)</span></div>
+      <div class="ro" id="roToilBox"><span class="k">Oil temperature</span><span class="v" id="roToil">—</span><span class="u">°C · <span id="roNu">—</span> cSt · film ratio λ <span id="roLam">—</span></span></div>
+      <div class="ro"><span class="k">Bearing loads</span><span class="v" id="roBrg">—</span><span class="u">kN per pinion bearing · gear <span id="roBrg2">—</span> kN</span></div>
+      <div class="ro"><span class="k">Pitting damage</span><span class="v" id="roPit">0</span><span class="u">% of surface life used</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="grp-title">Gear geometry</div>
+      <div class="ctl"><label for="m">Module <output id="mOut">4 mm</output></label><input type="range" id="m" min="2" max="10" value="4" step="0.5"></div>
+      <div class="ctl"><label for="z1">Pinion teeth <output id="z1Out">20</output></label><input type="range" id="z1" min="12" max="45" value="20" step="1"></div>
+      <div class="ctl"><label for="z2">Gear teeth <output id="z2Out">60</output></label><input type="range" id="z2" min="20" max="150" value="60" step="1"></div>
+      <div class="ctl"><label for="b">Face width <output id="bOut">50 mm</output></label><input type="range" id="b" min="10" max="120" value="50" step="2"></div>
+      <div class="ctl"><label for="beta">Helix angle <output id="betaOut">0°</output></label><input type="range" id="beta" min="0" max="35" value="0" step="1"></div>
+      <div class="ctl"><label for="Qv">Manufacturing quality <output id="QvOut">Qv 8</output></label><input type="range" id="Qv" min="5" max="11" value="8" step="1"></div>
+      <div class="ctl"><label>Material (both gears) <select id="mat"><option value="th" selected>Steel through-hardened 300 HB · 300 / 950 MPa</option><option value="ch">Steel case-hardened 60 HRC · 450 / 1500 MPa</option><option value="ci">Grey cast iron · 110 / 520 MPa</option><option value="br">Bronze · 90 / 360 MPa</option></select></label></div>
+      <div class="grp-title">Drive and lubrication</div>
+      <div class="ctl"><label for="n1">Pinion speed <output id="n1Out">1450 rpm</output></label><input type="range" id="n1" min="100" max="4000" value="1450" step="50"></div>
+      <div class="ctl"><label for="P">Transmitted power <output id="POut">30 kW</output></label><input type="range" id="P" min="1" max="250" value="30" step="1"></div>
+      <div class="ctl"><label for="Ko">Overload / service factor Ko <output id="KoOut">1.25</output></label><input type="range" id="Ko" min="1" max="2.5" value="1.25" step="0.05"></div>
+      <div class="ctl"><label>Oil grade <select id="vg"><option value="68">ISO VG 68</option><option value="150">ISO VG 150</option><option value="220" selected>ISO VG 220</option><option value="320">ISO VG 320</option><option value="460">ISO VG 460</option></select></label></div>
+      <div class="ctl"><label>Oil level <select id="imm"><option value="0.5">Low (half immersion)</option><option value="1" selected>Normal</option><option value="2">Overfilled</option></select></label></div>
+      <div class="ctl"><label for="Tamb">Ambient <output id="TambOut">25 °C</output></label><input type="range" id="Tamb" min="0" max="50" value="25" step="1"></div>
+      <div class="ctl"><label for="tscale">Clock <output id="tscaleOut">×20</output></label><input type="range" id="tscale" min="1" max="2000" value="20" step="1"></div>
+      <div class="ctl-actions">
+        <button class="act" id="btnRun">Running</button>
+        <button class="act ghost" id="btnStop">Stop</button>
+        <button class="act ghost" id="btnNew">New gears and oil</button>
+        <button class="act ghost" id="btnRecord">Record reading</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="base">Spur m4 20:60, 30 kW</button>
+          <button class="mini" data-preset="helical">Same pair, helical 20°</button>
+          <button class="mini" data-preset="coarse">Module 6</button>
+          <button class="mini" data-preset="part">Part load 6 kW</button>
+          <button class="mini" data-preset="fast">3 000 rpm churning</button>
+          <button class="mini" data-preset="overload">Overload 75 kW → pitting</button>
+          <button class="mini" data-preset="thin">Thin hot oil → scuffing</button>
+          <button class="mini" data-preset="iron">Cast iron gears</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2>Tooth stresses against transmitted power</h2><span class="legend"><i class="sw water"></i>bending <i class="sw taps"></i>contact · dashed = allowable</span></div>
+      <canvas id="chart" width="900" height="300" aria-label="Stress against power"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Efficiency against load · loss breakdown</h2><span class="legend"><i class="sw water"></i>this speed <i class="sw brass"></i>double speed <i class="sw taps"></i>now</span></div>
+      <canvas id="chart2" width="900" height="250" aria-label="Efficiency against load"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2 id="traceTitle">Trend · oil temperature and efficiency</h2></div>
+      <canvas id="trace" width="900" height="180" aria-label="Oil temperature trend"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Each reading stores the geometry, material, drive, tooth forces, both stresses with safety factors, contact ratio, efficiency, losses and oil temperature. Pitting and scuffing failures are logged automatically.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="gearbox.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Tag</th><th>m</th><th>z1</th><th>z2</th><th>b</th><th>β</th><th>Mat.</th><th>rpm</th><th>kW</th><th>Ratio</th><th>v m/s</th><th>Wt N</th><th>Wr N</th><th>Wa N</th><th>σb</th><th>SF b</th><th>σH</th><th>SF H</th><th>εα</th><th>η %</th><th>Loss kW</th><th>Oil °C</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>Tooth forces</h3><p class="eq">W<sub>t</sub> = 2T / d &nbsp;·&nbsp; W<sub>r</sub> = W<sub>t</sub> tan α<sub>t</sub> &nbsp;·&nbsp; W<sub>a</sub> = W<sub>t</sub> tan β &nbsp;·&nbsp; d = m z / cos β</p><p>Torque over the pitch radius gives the tangential force that transmits the power. The 20° pressure angle adds a radial component that pushes the gears apart, and a helix adds an axial thrust. All three land on the bearings; the axial one needs a bearing that can take it.</p></article>
+      <article><h3>Bending and contact stress</h3><p class="eq">σ<sub>b</sub> = W<sub>t</sub> K<sub>o</sub> K<sub>v</sub> K<sub>m</sub> / (b m Y) &nbsp;·&nbsp; σ<sub>H</sub> = C<sub>p</sub> √[W<sub>t</sub> K<sub>o</sub> K<sub>v</sub> K<sub>m</sub> / (b d₁ I)]</p><p>The Lewis equation treats the tooth as a cantilever; the form factor Y grows with tooth number. The Hertz equation gives the surface pressure between the two curved flanks; it rises only with the square root of load but is compared with a much higher allowable. Steel gears are usually limited by contact (pitting), not by bending. Kv accounts for tooth impacts at speed and gets worse with poorer quality.</p></article>
+      <article><h3>Efficiency</h3><p class="eq">P<sub>mesh</sub> = P μ H<sub>v</sub> &nbsp;·&nbsp; H<sub>v</sub> = π (u + 1)/(z₁ u cos β) (1 − ε<sub>α</sub> + ε<sub>α</sub>²/2)</p><p>Tooth sliding costs a fraction of the transmitted power that depends on friction and on the tooth numbers (finer pitch, more teeth, less sliding). Churning, bearings and seals are largely fixed losses, so they dominate at part load and at high speed: a gearbox at 20 % load is much less efficient than at full load, and a fast gearbox in thick oil churns.</p></article>
+      <article><h3>Lubrication failures</h3><p>The oil film between the flanks must be thicker than the surface roughness (λ above about 1). Thin, hot oil, high load and high sliding raise the flash temperature and can weld and tear the surfaces: scuffing, in seconds. Contact stress above the allowable does not break anything at once; it fatigues the surface and pits it over hours, in proportion to a steep power of the overload.</p></article>
+      <article><h3>About the numbers</h3><p>[Illustrative data, for training only.] Lewis form factors and an AGMA-style dynamic factor; allowable stresses typical of the material classes; friction, churning and film-thickness relations are simplified; the oil is a single thermal mass. Real gear rating uses the full ISO 6336 or AGMA 2001 factors.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the bench</h2>
+    <ul>
+      <li><b>Geometry</b>: module, teeth, face width, helix and quality. The drawing, forces and stresses update at once; the stress chart shows both stresses against power with their allowables.</li>
+      <li><b>Drive</b>: speed, power and service factor. The efficiency chart shows where you sit on the load curve and how the losses split.</li>
+      <li><b>Run</b> the clock to heat the oil: viscosity falls, friction and film ratio change, and overloads use up pitting life or scuff the teeth. New gears and oil resets damage and temperature.</li>
+      <li><b>Record</b> readings to compare module, face width, helix, load and speed in the tasks.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>Space</kbd> run / stop · <kbd>N</kbd> new gears · <kbd>R</kbd> record · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

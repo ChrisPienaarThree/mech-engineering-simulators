@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Belt and Chain Drive Bench</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 15</span>
+    <h1>Belt and Chain Drive Bench</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Stopped</span>
+    <span class="pill ok" id="pillState">—</span>
+    <span class="pill" id="pillRatio">ratio —</span>
+    <span class="pill warn hidden" id="pillSlip">GROSS SLIP — belt squealing</span>
+    <span class="pill warn hidden" id="pillJump">Tooth jump / chain jump</span>
+    <span class="pill amber hidden" id="pillHot">Belt overheating</span>
+    <span class="pill amber hidden" id="pillBrg">Bearing load high</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Two-pulley belt or chain drive with motor and load">
+    <div class="rig-head">
+      <h2 id="rigTitle">V-belt drive · tight side on top, slack side below</h2>
+      <span class="legend"><i class="sw taps"></i>tight side T₁ <i class="sw water"></i>slack side T₂ <i class="sw good"></i>wrap angle <i class="sw brass"></i>belt motion</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="readouts">
+      <div class="ro"><span class="k">Speed ratio</span><span class="v" id="roRatio">—</span><span class="u">nominal · actual <span id="roRatioA">—</span> · driven <span id="roN2">—</span> rpm</span></div>
+      <div class="ro" id="roSlipBox"><span class="k">Slip / creep</span><span class="v" id="roSlip">—</span><span class="u">% · <span id="roSlipNote">—</span></span></div>
+      <div class="ro"><span class="k">Belt speed</span><span class="v" id="roV">—</span><span class="u">m/s · length <span id="roLen">—</span> mm</span></div>
+      <div class="ro"><span class="k">Wrap on small pulley</span><span class="v" id="roWrap">—</span><span class="u">° · e^(μθ) <span id="roEmu">—</span></span></div>
+      <div class="ro"><span class="k">Tight side T₁</span><span class="v" id="roT1">—</span><span class="u">N · slack T₂ <span id="roT2">—</span> N · centrifugal <span id="roTc">—</span> N</span></div>
+      <div class="ro" id="roTeBox"><span class="k">Effective tension</span><span class="v" id="roTe">—</span><span class="u">N transmitted · capacity <span id="roTeMax">—</span> N</span></div>
+      <div class="ro"><span class="k">Power</span><span class="v" id="roP">—</span><span class="u">kW at the load · efficiency <span id="roEta">—</span> %</span></div>
+      <div class="ro" id="roBeltsBox"><span class="k">Belts required</span><span class="v" id="roBelts">—</span><span class="u">for this power with service factor 1.3 · fitted <span id="roZ">—</span></span></div>
+      <div class="ro" id="roBrgBox"><span class="k">Shaft / bearing load</span><span class="v" id="roBrg">—</span><span class="u">N (T₁ + T₂ resultant)</span></div>
+      <div class="ro" id="roTmpBox"><span class="k">Belt temperature</span><span class="v" id="roTmp">—</span><span class="u">°C · life factor <span id="roLife">—</span></span></div>
+    </div>
+
+    <div class="controls">
+      <div class="types" id="types"><button class="on" data-type="v">V-belt</button><button data-type="flat">Flat belt</button><button data-type="timing">Synchronous (timing) belt</button><button data-type="chain">Roller chain</button></div>
+      <div class="grp-title">Geometry</div>
+      <div class="ctl"><label for="d1"><span id="d1Name">Driver pulley diameter</span> <output id="d1Out">125 mm</output></label><input type="range" id="d1" min="50" max="500" value="125" step="5"></div>
+      <div class="ctl"><label for="d2"><span id="d2Name">Driven pulley diameter</span> <output id="d2Out">250 mm</output></label><input type="range" id="d2" min="50" max="800" value="250" step="5"></div>
+      <div class="ctl"><label for="C">Centre distance <output id="COut">600 mm</output></label><input type="range" id="C" min="150" max="2000" value="600" step="10"></div>
+      <div class="ctl" id="ctlSec"><label>Belt section / chain size <select id="sec"><option value="SPZ">SPZ (10 mm)</option><option value="SPA" selected>SPA (13 mm)</option><option value="SPB">SPB (16 mm)</option><option value="SPC">SPC (22 mm)</option></select></label></div>
+      <div class="ctl"><label for="z">Number of belts / strands <output id="zOut">2</output></label><input type="range" id="z" min="1" max="6" value="2" step="1"></div>
+      <div class="ctl"><label for="misal">Pulley misalignment <output id="misalOut">0.0°</output></label><input type="range" id="misal" min="0" max="3" value="0" step="0.1"></div>
+      <div class="grp-title">Operation</div>
+      <div class="ctl"><label for="n1">Driver speed <output id="n1Out">1 450 rpm</output></label><input type="range" id="n1" min="100" max="3000" value="1450" step="10"></div>
+      <div class="ctl"><label for="Tload">Load torque at the driven shaft <output id="TloadOut">60 N·m</output></label><input type="range" id="Tload" min="0" max="600" value="60" step="5"></div>
+      <div class="ctl"><label for="pre">Installation tension (of recommended) <output id="preOut">100 %</output></label><input type="range" id="pre" min="20" max="200" value="100" step="5"></div>
+      <div class="ctl"><label for="mu">Friction coefficient (belt to pulley) <output id="muOut">0.30</output></label><input type="range" id="mu" min="0.1" max="0.5" value="0.3" step="0.01"></div>
+      <div class="ctl"><label for="Tamb">Ambient temperature <output id="TambOut">25 °C</output></label><input type="range" id="Tamb" min="0" max="50" value="25" step="1"></div>
+      <div class="ctl"><label for="tscale">Wear clock <output id="tscaleOut">×50</output></label><input type="range" id="tscale" min="1" max="200" value="50" step="1"></div>
+      <div class="ctl-actions">
+        <button class="act" id="btnRun">Start</button>
+        <button class="act ghost" id="btnStop">Stop</button>
+        <button class="act ghost" id="btnRetension">Re-tension / new belt</button>
+        <button class="act ghost" id="btnRecord">Record reading</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="design">Design point (SPA × 2)</button>
+          <button class="mini" data-preset="overload">Load until it slips</button>
+          <button class="mini" data-preset="loose">Belt too loose</button>
+          <button class="mini" data-preset="tight">Belt too tight</button>
+          <button class="mini" data-preset="bigratio">Big ratio, small wrap</button>
+          <button class="mini" data-preset="flat">Same drive, flat belt</button>
+          <button class="mini" data-preset="timing">Timing belt, then jump</button>
+          <button class="mini" data-preset="chain">Chain, 11-tooth sprocket</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2 id="chartTitle">Traction · transmitted tension against load, with the capacity of this belt and tension</h2><span class="legend"><i class="sw water"></i>transmitted <i class="sw taps"></i>slip <i class="sw good"></i>capacity <i class="sw brass"></i>operating point</span></div>
+      <canvas id="chart" width="900" height="320" aria-label="Traction and slip against load"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2 id="traceTitle">Traces · driven speed, slip and belt temperature</h2></div>
+      <canvas id="trace" width="900" height="220" aria-label="Speed, slip and temperature traces"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Each reading stores the drive geometry, tension setting, load, tensions, slip, power, belts required and bearing load.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="belt-drive.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Tag</th><th>Type</th><th>Section</th><th>d1</th><th>d2</th><th>C mm</th><th>z</th><th>n1</th><th>Load N·m</th><th>Tension %</th><th>Wrap°</th><th>T1 N</th><th>T2 N</th><th>Te N</th><th>Cap N</th><th>Slip %</th><th>kW</th><th>η %</th><th>Belts req.</th><th>Bearing N</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>Friction drives</h3><p class="eq">T₁ / T₂ = e^{μθ} &nbsp;(flat) &nbsp;·&nbsp; T₁ / T₂ = e^{μθ / sin(β/2)} &nbsp;(V, β = 38°) &nbsp;·&nbsp; T<sub>e</sub> = T₁ − T₂ &nbsp;·&nbsp; P = T<sub>e</sub> · v</p><p>A belt transmits the difference between its tight and slack side tensions. The Euler–Eytelwein ratio caps how unequal they can be for a given friction and wrap; the V groove multiplies the effective friction about three times, which is why a V-belt carries several times the power of a flat belt at the same tension.</p></article>
+      <article><h3>Installation tension</h3><p class="eq">T₁ + T₂ = 2T₀ &nbsp;·&nbsp; capacity T<sub>e,max</sub> = 2(T₀ − T<sub>c</sub>) (e^{μθ} − 1)/(e^{μθ} + 1)</p><p>Tension sets the capacity. Too loose and the drive slips under load, squeals and burns the belt; too tight and the shaft and bearings carry T₁ + T₂ for nothing while the belt fatigues. Centrifugal tension T<sub>c</sub> = m v² uses up tension at high belt speed and carries no load.</p></article>
+      <article><h3>Creep and slip</h3><p>Even below the limit a belt creeps 0.5–2 % because it stretches on the tight side and relaxes on the slack side, so the ratio is never exactly the diameter ratio. Past the limit it slips grossly: the driven speed falls, the belt heats, and life collapses. Synchronous belts and chains do not creep; they jump teeth instead when tension or wear lets the belt ride up.</p></article>
+      <article><h3>Wrap angle and ratio</h3><p class="eq">θ₁ ≈ 180° − 2 sin⁻¹((d₂ − d₁)/2C)</p><p>A big ratio on a short centre distance leaves the small pulley with little wrap, and capacity falls with it. The cure is a longer centre distance, an idler, or a two-stage drive.</p></article>
+      <article><h3>Chains</h3><p class="eq">speed variation = 1 − cos(180°/z) &nbsp;·&nbsp; chain pull = 2T/d</p><p>A chain wraps a polygon, not a circle, so the chain speed pulses every tooth: 4 % on an 11-tooth sprocket, under 1 % on 19 teeth. That pulse is vibration and wear. Chains want at least 17 teeth on the small sprocket, lubrication chosen by speed, and replacement at about 3 % elongation before the chain rides up the teeth.</p></article>
+      <article><h3>About the numbers</h3><p>[Illustrative data, for training only.] Belt sections carry a rated power per belt that rises with belt speed and falls for small pulleys; service factor 1.3. Belt temperature comes from slip power on a thermal clock; life factor from temperature and misalignment. Timing belt and chain jump limits are simplified.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the bench</h2>
+    <ul>
+      <li><b>Choose the drive</b>: V-belt, flat belt, synchronous belt or roller chain, then pulley or sprocket sizes, centre distance, section and number of belts.</li>
+      <li><b>Run it</b>: set the driver speed and the load torque. Read the tensions on the drawing, the slip, the driven speed and the power. Raise the load until the belt slips, or lower the installation tension.</li>
+      <li><b>Chart</b>: transmitted tension and slip against load, with the capacity line for the present tension and wrap. For a chain the chart shows the chordal speed pulse over one tooth.</li>
+      <li><b>Record</b> readings to compare tension, wrap, V against flat and belt count in the tasks.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>Space</kbd> start / stop · <kbd>R</kbd> record · <kbd>1</kbd>–<kbd>4</kbd> drive type · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

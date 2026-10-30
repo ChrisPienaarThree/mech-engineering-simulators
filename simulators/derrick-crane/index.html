@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Derrick Crane Demonstrator</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 09</span>
+    <h1>Derrick Crane Demonstrator</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill ok" id="pillState">—</span>
+    <span class="pill" id="pillUtil">utilisation —</span>
+    <span class="pill" id="pillGov">—</span>
+    <span class="pill warn hidden" id="pillOver">OVERLOAD</span>
+    <span class="pill warn hidden" id="pillTip">ANCHOR LIFTING — overturning</span>
+    <span class="pill amber hidden" id="pillSlew">Slew limit — boom against leg</span>
+    <span class="pill amber hidden" id="pillBlock">Two-blocked</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Stiff-leg derrick: side elevation in the plane of the boom, and plan view">
+    <div class="rig-head">
+      <h2>Stiff-leg derrick · elevation in the boom plane · plan</h2>
+      <span class="legend"><i class="sw good"></i>&lt; 70 % <i class="sw" style="background:var(--warn)"></i>70–100 % <i class="sw taps"></i>over 100 % of capacity <i class="sw brass"></i>topping lift <i class="sw" style="background:var(--water-deep)"></i>hoist rope</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="readouts">
+      <div class="ro"><span class="k">Radius</span><span class="v" id="roR">—</span><span class="u">m · hook height <span id="roH">—</span> m</span></div>
+      <div class="ro"><span class="k">Load on hook</span><span class="v" id="roW">—</span><span class="u">kN (<span id="roWt">—</span> t incl. block)</span></div>
+      <div class="ro" id="roTtBox"><span class="k">Topping lift</span><span class="v" id="roTt">—</span><span class="u">kN total · <span id="roTtp">—</span> kN per part</span></div>
+      <div class="ro" id="roThBox"><span class="k">Hoist rope</span><span class="v" id="roTh">—</span><span class="u">kN per part · winch pull</span></div>
+      <div class="ro" id="roCbBox"><span class="k">Boom compression</span><span class="v" id="roCb">—</span><span class="u">kN of <span id="roCbCap">—</span></span></div>
+      <div class="ro" id="roCmBox"><span class="k">Mast compression</span><span class="v" id="roCm">—</span><span class="u">kN of <span id="roCmCap">—</span></span></div>
+      <div class="ro" id="roL1Box"><span class="k">Leg 1 (left)</span><span class="v" id="roL1">—</span><span class="u">kN <span id="roL1s">—</span></span></div>
+      <div class="ro" id="roL2Box"><span class="k">Leg 2 (right)</span><span class="v" id="roL2">—</span><span class="u">kN <span id="roL2s">—</span></span></div>
+      <div class="ro" id="roUBox"><span class="k">Anchor uplift</span><span class="v" id="roU">—</span><span class="u">kN worst · hold-down <span id="roUcap">—</span> kN</span></div>
+      <div class="ro"><span class="k">Base reaction</span><span class="v" id="roB">—</span><span class="u">kN down · rated load here <span id="roRated">—</span> t</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="grp-title">Structure dimensions</div>
+      <div class="ctl"><label for="Hm">Mast height <output id="HmOut">24 m</output></label><input type="range" id="Hm" min="10" max="40" value="24" step="0.5"></div>
+      <div class="ctl"><label for="Lb">Boom length <output id="LbOut">30 m</output></label><input type="range" id="Lb" min="10" max="45" value="30" step="0.5"></div>
+      <div class="ctl"><label for="hf">Boom foot height above base <output id="hfOut">1.5 m</output></label><input type="range" id="hf" min="0.5" max="4" value="1.5" step="0.1"></div>
+      <div class="ctl"><label for="Ls">Sill reach (leg anchors from mast) <output id="LsOut">18 m</output></label><input type="range" id="Ls" min="6" max="30" value="18" step="0.5"></div>
+      <div class="ctl"><label for="phi">Leg spread (half-angle from the rear) <output id="phiOut">45°</output></label><input type="range" id="phi" min="25" max="70" value="45" step="1"></div>
+      <div class="ctl"><label for="qb">Boom mass <output id="qbOut">90 kg/m</output></label><input type="range" id="qb" min="40" max="200" value="90" step="5"></div>
+      <div class="grp-title">Rigging and capacities</div>
+      <div class="ctl"><label for="nh">Hoist reeving (parts of line) <output id="nhOut">4</output></label><input type="range" id="nh" min="1" max="8" value="4" step="1"></div>
+      <div class="ctl"><label for="nt">Topping-lift reeving (parts) <output id="ntOut">6</output></label><input type="range" id="nt" min="2" max="12" value="6" step="1"></div>
+      <div class="ctl"><label>Hoist rope <select id="ropeH"><option value="170">16 mm · MBL 170 kN</option><option value="265" selected>20 mm · MBL 265 kN</option><option value="380">24 mm · MBL 380 kN</option><option value="520">28 mm · MBL 520 kN</option></select></label></div>
+      <div class="ctl"><label>Topping rope <select id="ropeT"><option value="170">16 mm · MBL 170 kN</option><option value="265" selected>20 mm · MBL 265 kN</option><option value="380">24 mm · MBL 380 kN</option><option value="520">28 mm · MBL 520 kN</option></select></label></div>
+      <div class="ctl"><label for="mh">Hook block mass <output id="mhOut">0.6 t</output></label><input type="range" id="mh" min="0.2" max="2" value="0.6" step="0.1"></div>
+      <div class="ctl"><label for="anc">Anchor hold-down (each) <output id="ancOut">250 kN</output></label><input type="range" id="anc" min="50" max="600" value="250" step="10"></div>
+      <div class="ctl"><label for="cb0">Boom strut capacity at 20 m <output id="cb0Out">900 kN</output></label><input type="range" id="cb0" min="300" max="1500" value="900" step="50"></div>
+      <div class="ctl"><label for="cl0">Leg strut capacity at 20 m <output id="cl0Out">500 kN</output></label><input type="range" id="cl0" min="200" max="1000" value="500" step="50"></div>
+      <div class="ctl"><label for="winch">Winch line pull (hoist and topping) <output id="winchOut">60 kN</output></label><input type="range" id="winch" min="20" max="150" value="60" step="5"></div>
+      <div class="grp-title">Operate</div>
+      <div class="ctl"><label for="mload">Load on the ground <output id="mloadOut">10 t</output></label><input type="range" id="mload" min="0" max="50" value="10" step="0.5"></div>
+      <div class="ctl"><label for="theta">Boom angle <output id="thetaOut">55°</output></label><input type="range" id="theta" min="10" max="85" value="55" step="0.5"></div>
+      <div class="ctl"><label for="psi">Slew (0 = away from the legs) <output id="psiOut">0°</output></label><input type="range" id="psi" min="-160" max="160" value="0" step="1"></div>
+      <div class="motion">
+        <div class="seg"><span>Luff</span><button data-m="luffDown" title="Boom down (out)">▼ out</button><button data-m="luffUp" title="Boom up (in)">▲ in</button></div>
+        <div class="seg"><span>Slew</span><button data-m="slewL">◀</button><button data-m="slewR">▶</button></div>
+        <div class="seg"><span>Hoist</span><button data-m="hoistDown">▼ lower</button><button data-m="hoistUp">▲ raise</button></div>
+        <span class="note">Hold the buttons or keys (Q/A luff, Z/X slew, arrows hoist). The load comes onto the hook as it lifts off the ground.</span>
+      </div>
+      <div class="ctl-actions">
+        <button class="act ghost" id="btnRecord">Record reading</button>
+        <button class="act ghost" id="btnLand">Land the load</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="std">Standard 24 m / 30 m rig</button>
+          <button class="mini" data-preset="reach">Reach out to the limit</button>
+          <button class="mini" data-preset="tall">Tall mast, same lift</button>
+          <button class="mini" data-preset="narrow">Narrow legs, slewed</button>
+          <button class="mini" data-preset="light">Light anchors</button>
+          <button class="mini" data-preset="single">Single-part hoist</button>
+          <button class="mini" data-preset="long">Long boom</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2>Load chart · rated load against radius for this rig</h2><span class="legend"><i class="sw" style="background:var(--water)"></i>boom <i class="sw brass"></i>topping rope <i class="sw" style="background:var(--water-deep)"></i>hoist rope / winch <i class="sw" style="background:var(--warn)"></i>anchor hold-down <i class="sw" style="background:var(--steel)"></i>legs / mast <i class="sw taps"></i>current lift</span></div>
+      <canvas id="chart" width="900" height="320" aria-label="Rated load against radius with the governing limit"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Member utilisation · % of capacity (ropes at safety factor 5)</h2></div>
+      <canvas id="bars" width="900" height="250" aria-label="Utilisation of each member, rope, winch and anchor"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Each reading stores the dimensions, rigging, the lift and every member force with its utilisation.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="derrick-crane.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Tag</th><th>Mast m</th><th>Boom m</th><th>Sill m</th><th>Spread°</th><th>Angle°</th><th>Slew°</th><th>R m</th><th>Load t</th><th>Parts h/t</th><th>Topping kN</th><th>Hoist/part kN</th><th>Boom kN</th><th>Mast kN</th><th>Leg1 kN</th><th>Leg2 kN</th><th>Uplift kN</th><th>Util %</th><th>Governs</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>What a derrick is</h3><p>A mast held upright by two stiff legs (struts to anchored sills) or by guys, and a boom pinned at the mast foot and luffed by a topping lift from the mast head. The load hangs from the boom tip; the hoist rope runs from the tip down the boom to a winch at the foot. A stiff-leg derrick can slew through roughly 270°: the boom cannot pass the legs. Everything here is static equilibrium in the plane of the boom, plus the two legs in plan.</p></article>
+      <article><h3>Topping lift</h3><p class="eq">T<sub>topping</sub> = (W + W<sub>boom</sub>/2) · d<sub>topping</sub> / (H<sub>mast</sub> − h<sub>foot</sub>)</p><p>Moments about the boom foot. The topping-rope length d grows and the mast height sits in the denominator, so a taller mast or a shorter, steeper boom eases the topping lift. Divide by the parts of line for the rope tension and the winch pull.</p></article>
+      <article><h3>Boom compression</h3><p class="eq">C<sub>boom</sub> = T<sub>topping</sub>·(component along the boom) + W·sin θ + W/n<sub>hoist</sub> + W<sub>boom</sub>·sin θ</p><p>The topping lift squeezes the boom, the load's weight has a component along it, and the hoist lead rope pulls the tip toward the foot with the rope tension. The strut capacity falls with the square of the length (Euler), so a longer boom buys radius with strength.</p></article>
+      <article><h3>Mast and legs</h3><p>The topping lift pulls the mast head toward the boom tip. The horizontal part must be held by the legs; in plan the two leg forces are solved from that horizontal pull at the current slew. Slew toward one leg and it takes nearly all of it; slew past the rear quarter and the other leg goes into compression. The vertical parts of the leg forces, the topping-lift rope leading down the mast, and the downward pull of the topping lift add up to the mast compression.</p></article>
+      <article><h3>Anchors and overturning</h3><p>A leg in tension lifts its anchor with T·H<sub>mast</sub>/L<sub>leg</sub>. When that exceeds the hold-down (dead weight, ballast or bolts) the sill lifts and the derrick overturns about the mast foot. The base bearing carries the load, the boom and the anchors' uplift.</p></article>
+      <article><h3>Load chart</h3><p>For every radius the rated load is the smallest load at which any limit is reached: boom strut, topping rope at safety factor 5, hoist rope or winch pull, anchor hold-down, leg strut, mast. The chart is recomputed whenever a dimension changes; the colour shows what governs.</p></article>
+      <article><h3>About the rig data</h3><p>[Illustrative data, for training only.] Member capacities scale with (20 m / length)² from the values you set. Ropes use the marked breaking load divided by 5. Winch pull and anchor hold-down are single numbers. No dynamic factors, wind, side load or sling geometry: real lifts add all of them.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the demonstrator</h2>
+    <ul>
+      <li><b>Set the rig</b> with the dimension sliders: mast height, boom length and foot height, sill reach, leg spread. Change rigging: parts of line, rope sizes, block mass, anchor hold-down, strut capacities, winch pull.</li>
+      <li><b>Operate it</b>: hoist to lift the load off the ground, luff the boom out and in, slew left and right. Members recolour with utilisation; the readouts give every force.</li>
+      <li><b>Load chart</b> shows the rated load at every radius for the rig as it is now, coloured by what governs, with the current lift as a red dot. Utilisation bars show how close each part is to its limit.</li>
+      <li><b>Record</b> readings to compare reeving, mast height, boom angle, boom length and slew. The tasks check the comparisons.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>Q</kbd>/<kbd>A</kbd> luff in/out · <kbd>Z</kbd>/<kbd>X</kbd> slew · <kbd>↑</kbd>/<kbd>↓</kbd> hoist · <kbd>R</kbd> record · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

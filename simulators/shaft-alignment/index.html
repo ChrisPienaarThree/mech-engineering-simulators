@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shaft Alignment Bench</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 24</span>
+    <h1>Shaft Alignment Bench</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Stopped</span>
+    <span class="pill warn" id="pillState">—</span>
+    <span class="pill" id="pillMode">—</span>
+    <span class="pill warn hidden" id="pillVib">2× vibration in zone C</span>
+    <span class="pill warn hidden" id="pillSoft">Soft foot</span>
+    <span class="pill amber hidden" id="pillSag">Bracket sag not compensated</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Pump and motor with coupling">
+    <div class="rig-head">
+      <h2 id="rigTitle">Side view · vertical plane (offset and angularity exaggerated ×40)</h2>
+      <span class="legend"><i class="sw taps"></i>pump shaft line <i class="sw brass"></i>motor <i class="sw good"></i>shims added <i class="sw ink"></i>indicators</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="readouts">
+      <div class="ro" id="roOvBox"><span class="k">Vertical offset / angularity</span><span class="v" id="roOv">—</span><span class="u">mm cold · hot <span id="roOvHot">—</span> · angle <span id="roAv">—</span> mm/100</span></div>
+      <div class="ro" id="roOhBox"><span class="k">Horizontal offset / angularity</span><span class="v" id="roOh">—</span><span class="u">mm · angle <span id="roAh">—</span> mm/100</span></div>
+      <div class="ro"><span class="k">Tolerance at this speed</span><span class="v" id="roTol">—</span><span class="u">mm offset / mm per 100 angle</span></div>
+      <div class="ro"><span class="k">Rim readings V / H</span><span class="v" id="roRim">—</span><span class="u">mm TIR (bottom − top, right − left)</span></div>
+      <div class="ro"><span class="k">Face readings V / H</span><span class="v" id="roFace">—</span><span class="u">mm TIR on the face diameter</span></div>
+      <div class="ro"><span class="k">Reverse-dial rims</span><span class="v" id="roRev">—</span><span class="u">mm at the pump hub / motor hub planes</span></div>
+      <div class="ro" id="roMeasBox"><span class="k">Offset · angle from the dials</span><span class="v" id="roMeas">—</span><span class="u" id="roMeasNote">from the dials</span></div>
+      <div class="ro"><span class="k">Laser display (true)</span><span class="v" id="roLaser">—</span><span class="u">offset mm · angle mm/100, vertical</span></div>
+      <div class="ro" id="roV2Box"><span class="k">Running vibration 2×</span><span class="v" id="roV2">—</span><span class="u">mm/s · 1× <span id="roV1">—</span> · bearing <span id="roTb">—</span> °C</span></div>
+      <div class="ro" id="roSoftBox"><span class="k">Soft-foot check</span><span class="v" id="roSoft">—</span><span class="u">gap under a foot when its bolt is loosened</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="types" id="types"><button class="on" data-type="v">Vertical plane (side view)</button><button data-type="h">Horizontal plane (plan view)</button></div>
+      <div class="grp-title">Machine train</div>
+      <div class="ctl"><label for="A">Coupling to front feet <output id="AOut">200 mm</output></label><input type="range" id="A" min="100" max="500" value="200" step="10"></div>
+      <div class="ctl"><label for="B">Coupling to rear feet <output id="BOut">600 mm</output></label><input type="range" id="B" min="300" max="1200" value="600" step="10"></div>
+      <div class="ctl"><label for="D">Face indicator diameter <output id="DOut">150 mm</output></label><input type="range" id="D" min="80" max="300" value="150" step="10"></div>
+      <div class="ctl"><label for="S">Reverse-dial span <output id="SOut">140 mm</output></label><input type="range" id="S" min="60" max="400" value="140" step="10"></div>
+      <div class="ctl"><label for="rpm">Running speed <output id="rpmOut">1500 rpm</output></label><input type="range" id="rpm" min="750" max="6000" value="1500" step="50"></div>
+      <div class="grp-title">Corrections at the motor feet</div>
+      <div class="ctl"><label for="sF">Shims under the front feet <output id="sFOut">+0.00 mm</output></label><input type="range" id="sF" min="-1.5" max="1.5" value="0" step="0.01"></div>
+      <div class="ctl"><label for="sR">Shims under the rear feet <output id="sROut">+0.00 mm</output></label><input type="range" id="sR" min="-1.5" max="1.5" value="0" step="0.01"></div>
+      <div class="ctl"><label for="mF">Sideways move at the front feet <output id="mFOut">+0.00 mm</output></label><input type="range" id="mF" min="-1.5" max="1.5" value="0" step="0.01"></div>
+      <div class="ctl"><label for="mR">Sideways move at the rear feet <output id="mROut">+0.00 mm</output></label><input type="range" id="mR" min="-1.5" max="1.5" value="0" step="0.01"></div>
+      <div class="ctl"><label for="softFix">Shim under the soft foot <output id="softFixOut">0.00 mm</output></label><input type="range" id="softFix" min="0" max="0.4" value="0" step="0.01"></div>
+      <div class="grp-title">Measurement and targets</div>
+      <div class="ctl"><label for="sag">Indicator bracket sag <output id="sagOut">0.04 mm</output></label><input type="range" id="sag" min="0" max="0.15" value="0.04" step="0.01"></div>
+      <div class="ctl"><label>Sag compensation <select id="sagComp"><option value="off" selected>Not compensated</option><option value="on">Compensated (pre-set the dial)</option></select></label></div>
+      <div class="ctl"><label for="growth">Motor thermal growth (rises when hot) <output id="growthOut">+0.00 mm</output></label><input type="range" id="growth" min="0" max="0.2" value="0" step="0.01"></div>
+      <div class="ctl"><label>Alignment target <select id="hotAlign"><option value="off" selected>Cold: zero offset</option><option value="on">Hot: cold offset = − growth</option></select></label></div>
+      <div class="ctl"><label for="tscale">Running clock <output id="tscaleOut">×5</output></label><input type="range" id="tscale" min="1" max="30" value="5" step="1"></div>
+      <div class="ctl-actions">
+        <button class="act" id="btnRun">Start the set</button>
+        <button class="act ghost" id="btnStop">Stop</button>
+        <button class="act ghost" id="btnCheck">Soft-foot check</button>
+        <button class="act ghost" id="btnSol">Show solution</button>
+        <button class="act ghost" id="btnApply">Apply the computed corrections</button>
+        <button class="act ghost" id="btnNew">New random job</button>
+        <button class="act ghost" id="btnRecord">Record reading</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="found">As-found job at 1 500 rpm</button>
+          <button class="mini" data-preset="random">Random as-found job</button>
+          <button class="mini" data-preset="thermal">Hot motor, align for growth</button>
+          <button class="mini" data-preset="soft">Soft foot hidden in the job</button>
+          <button class="mini" data-preset="fast">3 600 rpm tolerance</button>
+          <button class="mini" data-preset="run">Run it as found</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2>Alignment graph · shaft centrelines and feet</h2><span class="legend"><i class="sw steel"></i>pump shaft <i class="sw taps"></i>motor vertical <i class="sw water"></i>motor horizontal <i class="sw brass"></i>hot <i class="sw good"></i>tolerance</span></div>
+      <canvas id="chart" width="900" height="300" aria-label="Alignment graph"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Vibration at the motor bearing · 1×, 2×, 3×</h2></div>
+      <canvas id="chart2" width="900" height="250" aria-label="Vibration bars"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2 id="traceTitle">Trend · vibration and bearing temperature</h2></div>
+      <canvas id="trace" width="900" height="180" aria-label="Vibration trend"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Each reading stores speed, true offset and angularity in both planes (cold and hot), the rim, face and reverse-dial readings, sag and growth settings, the corrections applied, whether the set is within tolerance and the running vibration.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="shaft-alignment.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Tag</th><th>rpm</th><th>Ov</th><th>Ov hot</th><th>Av</th><th>Oh</th><th>Ah</th><th>Rim V</th><th>Face V</th><th>Rim H</th><th>Face H</th><th>Sag</th><th>Comp.</th><th>Growth</th><th>Shim F</th><th>Shim R</th><th>Move F</th><th>Move R</th><th>In tol.</th><th>1×</th><th>2×</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>Offset and angularity</h3><p class="eq">y(x) = O + A·x/100 &nbsp;·&nbsp; shim at a foot = −y(x<sub>foot</sub>) &nbsp;·&nbsp; A = (y<sub>rear</sub> − y<sub>front</sub>) / (B − A) × 100</p><p>Misalignment at the coupling is an offset (the two centrelines parallel but apart) plus an angle (they cross). Both are corrected at the motor feet: the shaft is a straight line, so the shim change at each foot is simply the height of the motor centreline above the pump centreline at that foot, with the opposite sign. Two feet distances, two readings, two shims.</p></article>
+      <article><h3>Indicator methods</h3><p class="eq">rim TIR = 2 × offset &nbsp;·&nbsp; face TIR = angle × face diameter / 100 &nbsp;·&nbsp; reverse dial: two rims across a span give offset and angle</p><p>A rim indicator on one hub reads twice the offset as the shafts turn together; a face indicator reads the angle times the diameter it sweeps. Reverse-dial readings on both hubs give the offset at two planes, which is the same information. Lasers read offset and angle directly and do the arithmetic. Every method needs the bracket sag measured on a straight bar and subtracted, or the vertical readings are wrong by twice the sag.</p></article>
+      <article><h3>Thermal growth and soft foot</h3><p>Machines move as they warm: a motor typically rises a few hundredths of a millimetre at the shaft. Aligning to zero cold means misaligned hot, so the cold target is the negative of the growth. A soft foot (a foot that does not sit flat) distorts the frame every time its bolt is tightened, so the readings will not repeat; it must be found with an indicator at each foot and shimmed before alignment starts.</p></article>
+      <article><h3>What misalignment does</h3><p>A flexible coupling accommodates misalignment by flexing, and the reaction it develops loads the bearings and seals of both machines and shows up as vibration, especially at twice running speed. Bearing life falls with the cube of the load. Tolerances tighten with speed because the same offset makes larger forces and more cycles.</p></article>
+      <article><h3>About the numbers</h3><p>[Illustrative data, for training only.] Tolerances follow typical published tables; the coupling reaction, vibration and bearing heating are simple proxies. The as-found errors, soft foot and readings are generated for training and are not from a specific machine.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the bench</h2>
+    <ul>
+      <li><b>Read</b> the rim and face dials (or the reverse-dial and laser readouts) in the vertical and horizontal planes. Mind the bracket sag.</li>
+      <li><b>Correct</b>: work out the shims at the front and rear feet from the foot distances, then apply them with the sliders; switch to the plan view and jack the motor sideways. Show solution reveals the answer, Apply does it for you.</li>
+      <li><b>Before you start</b> run the soft-foot check; if a foot shows a gap, shim it first. If the motor grows when hot, align to the hot target.</li>
+      <li><b>Start the set</b> to see what the misalignment does: 1× and 2× vibration, coupling reaction, bearing temperature. Record readings for the tasks.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>Space</kbd> start / stop · <kbd>V</kbd> vertical · <kbd>H</kbd> horizontal · <kbd>R</kbd> record · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

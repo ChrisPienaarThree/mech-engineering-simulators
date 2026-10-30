@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Steam and Gas Turbine Cycle Board</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 20</span>
+    <h1>Steam and Gas Turbine Cycle Board</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Flowing</span>
+    <span class="pill ok" id="pillState">—</span>
+    <span class="pill" id="pillMode">—</span>
+    <span class="pill warn hidden" id="pillWarn">—</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Cycle flow board">
+    <div class="rig-head">
+      <h2 id="rigTitle">Rankine cycle · boiler, turbine, condenser, feed pump</h2>
+      <span class="legend"><i class="sw taps"></i>hot side <i class="sw water"></i>cold side <i class="sw brass"></i>flow <i class="sw ink"></i>state points</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="readouts">
+      <div class="ro"><span class="k">Thermal efficiency</span><span class="v" id="roEta">—</span><span class="u">% · Carnot between the same temperatures <span id="roCarnot">—</span> %</span></div>
+      <div class="ro"><span class="k">Net work</span><span class="v" id="roWnet">—</span><span class="u">kJ per kg of working fluid</span></div>
+      <div class="ro"><span class="k">Heat added</span><span class="v" id="roQin">—</span><span class="u">kJ/kg · rejected <span id="roQout">—</span> kJ/kg</span></div>
+      <div class="ro"><span class="k">Turbine work</span><span class="v" id="roWt">—</span><span class="u">kJ/kg gross</span></div>
+      <div class="ro"><span class="k">Work to the <span id="roWcName">pump</span></span><span class="v" id="roWc">—</span><span class="u">kJ/kg · back-work ratio <span id="roBwr">—</span> %</span></div>
+      <div class="ro" id="roXBox"><span class="k" id="roXName">Turbine exhaust quality</span><span class="v" id="roX">—</span><span class="u" id="roXNote">—</span></div>
+      <div class="ro"><span class="k" id="roT2Name">Boiler saturation temperature</span><span class="v" id="roT2">—</span><span class="u" id="roT2Note">—</span></div>
+      <div class="ro"><span class="k">Flow for the plant output</span><span class="v" id="roM">—</span><span class="u" id="roMNote">—</span></div>
+      <div class="ro"><span class="k">Heat rate</span><span class="v" id="roHr">—</span><span class="u">kJ of heat per kWh of work</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="types" id="types"><button class="on" data-type="rankine">Rankine steam cycle</button><button data-type="brayton">Brayton gas turbine</button><button data-type="combined">Combined cycle</button></div>
+      <div class="grp-title" data-m="rankine combined">Steam cycle</div>
+      <div class="ctl" data-m="rankine combined"><label for="p1">Boiler / HRSG pressure <output id="p1Out">8 MPa</output></label><input type="range" id="p1" min="1" max="18" value="8" step="0.5"></div>
+      <div class="ctl" data-m="rankine combined"><label for="T1">Turbine inlet temperature <output id="T1Out">500 °C</output></label><input type="range" id="T1" min="250" max="600" value="500" step="10"></div>
+      <div class="ctl" data-m="rankine combined"><label for="p2">Condenser pressure <output id="p2Out">10 kPa</output></label><input type="range" id="p2" min="5" max="100" value="10" step="1"></div>
+      <div class="ctl" data-m="rankine combined"><label for="etat">Steam turbine isentropic efficiency <output id="etatOut">0.88</output></label><input type="range" id="etat" min="0.6" max="1" value="0.88" step="0.01"></div>
+      <div class="ctl" data-m="rankine combined"><label for="etap">Feed pump efficiency <output id="etapOut">0.80</output></label><input type="range" id="etap" min="0.5" max="1" value="0.8" step="0.01"></div>
+      <div class="ctl" data-m="rankine"><label>Reheat <select id="reheat"><option value="off" selected>Off</option><option value="on">On — reheat to the inlet temperature</option></select></label></div>
+      <div class="ctl" data-m="rankine"><label for="prh">Reheat pressure <output id="prhOut">25 % of boiler pressure</output></label><input type="range" id="prh" min="0.1" max="0.5" value="0.25" step="0.05"></div>
+      <div class="grp-title" data-m="brayton combined">Gas turbine</div>
+      <div class="ctl" data-m="brayton combined"><label for="rp">Pressure ratio <output id="rpOut">10</output></label><input type="range" id="rp" min="2" max="40" value="10" step="1"></div>
+      <div class="ctl" data-m="brayton combined"><label for="Tamb">Ambient (compressor inlet) <output id="TambOut">15 °C</output></label><input type="range" id="Tamb" min="-10" max="45" value="15" step="1"></div>
+      <div class="ctl" data-m="brayton combined"><label for="T3">Turbine inlet temperature <output id="T3Out">1200 °C</output></label><input type="range" id="T3" min="700" max="1600" value="1200" step="10"></div>
+      <div class="ctl" data-m="brayton combined"><label for="etac">Compressor isentropic efficiency <output id="etacOut">0.85</output></label><input type="range" id="etac" min="0.6" max="1" value="0.85" step="0.01"></div>
+      <div class="ctl" data-m="brayton combined"><label for="etagt">Gas turbine isentropic efficiency <output id="etagtOut">0.88</output></label><input type="range" id="etagt" min="0.6" max="1" value="0.88" step="0.01"></div>
+      <div class="ctl" data-m="brayton"><label for="eps">Regenerator effectiveness <output id="epsOut">0.00</output></label><input type="range" id="eps" min="0" max="0.9" value="0" step="0.05"></div>
+      <div class="grp-title">Plant</div>
+      <div class="ctl"><label for="Pmw">Plant output <output id="PmwOut">100 MW</output></label><input type="range" id="Pmw" min="1" max="500" value="100" step="1"></div>
+      <div class="ctl-actions">
+        <button class="act" id="btnRun">Flowing</button>
+        <button class="act ghost" id="btnStop">Pause flow</button>
+        <button class="act ghost" id="btnRecord">Record reading</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="base">Rankine 8 MPa / 500 °C / 10 kPa</button>
+          <button class="mini" data-preset="hp">Boiler to 16 MPa</button>
+          <button class="mini" data-preset="vac">Condenser to 5 kPa</button>
+          <button class="mini" data-preset="reheat">16 MPa with reheat</button>
+          <button class="mini" data-preset="poor">Turbine efficiency 0.75</button>
+          <button class="mini" data-preset="gt">Gas turbine rp 10, 1 200 °C</button>
+          <button class="mini" data-preset="regen">rp 6 with regenerator</button>
+          <button class="mini" data-preset="highrp">rp 30</button>
+          <button class="mini" data-preset="cc">Combined cycle</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2 id="chartTitle">T-s diagram · steam dome and the Rankine cycle</h2><span class="legend"><i class="sw steel"></i>saturation dome / isobars <i class="sw taps"></i>cycle <i class="sw brass"></i>state points</span></div>
+      <canvas id="chart" width="900" height="300" aria-label="Temperature-entropy diagram"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2 id="chart2Title">Sweep · efficiency and exhaust quality against boiler pressure</h2><span class="legend"><i class="sw water"></i>efficiency <i class="sw brass"></i>second variable <i class="sw taps"></i>this setting</span></div>
+      <canvas id="chart2" width="900" height="250" aria-label="Parameter sweep"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Each reading stores the cycle settings, efficiency, net work, heat added, exhaust quality or temperature, back-work ratio, flow and heat rate.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="turbine-cycles.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Tag</th><th>Cycle</th><th>p1 MPa</th><th>T1 °C</th><th>p2 kPa</th><th>η turb</th><th>Reheat</th><th>rp</th><th>T3 °C</th><th>Regen ε</th><th>η %</th><th>w net</th><th>q in</th><th>x exit</th><th>bwr %</th><th>T exh</th><th>kg/s</th><th>Heat rate</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>Rankine cycle</h3><p class="eq">w<sub>t</sub> = h₁ − h₂ &nbsp;·&nbsp; w<sub>p</sub> = v Δp / η<sub>p</sub> &nbsp;·&nbsp; q<sub>in</sub> = h₁ − h₄ &nbsp;·&nbsp; η = (w<sub>t</sub> − w<sub>p</sub>) / q<sub>in</sub></p><p>Water is pumped to boiler pressure (almost no work, it is a liquid), boiled and superheated, expanded through the turbine, and condensed. Efficiency rises with boiler pressure and superheat because heat is added at a higher average temperature, and with condenser vacuum because heat is rejected at a lower one. The limit is Carnot between the same extremes; the gap is the heat added while the water warms up and boils well below the peak temperature.</p></article>
+      <article><h3>Wet exhaust and reheat</h3><p>Expanding from high pressure without enough superheat lands the exhaust inside the dome. Below about 88 % quality the water droplets erode the last blade rows. Reheat takes the partly expanded steam back to the boiler and dries the exhaust while adding heat at high temperature, so it helps both problems. The isentropic efficiency of the turbine also dries the exhaust, but by wasting work as heat.</p></article>
+      <article><h3>Brayton cycle</h3><p class="eq">T₂ = T₁ [1 + (r<sub>p</sub>^{(k−1)/k} − 1)/η<sub>c</sub>] &nbsp;·&nbsp; T₄ = T₃ [1 − η<sub>t</sub>(1 − r<sub>p</sub>^{−(k−1)/k})] &nbsp;·&nbsp; η = (w<sub>t</sub> − w<sub>c</sub>) / c<sub>p</sub>(T₃ − T₂)</p><p>Air is compressed, heated by burning fuel, and expanded. The compressor eats half or more of the turbine work (the back-work ratio), so component efficiencies matter far more than in a steam plant. Efficiency keeps rising with pressure ratio, but net work per kg peaks at r<sub>p</sub> = (T₃/T₁ · η<sub>c</sub>η<sub>t</sub>)^{k/2(k−1)}; turbine inlet temperature is the lever, limited by blade materials and cooling.</p></article>
+      <article><h3>Regenerator and combined cycle</h3><p>At low pressure ratio the exhaust is hotter than the compressor delivery, so a heat exchanger can preheat the air with exhaust heat and cut fuel. At high pressure ratio it is useless. The combined cycle instead uses the hot exhaust to raise steam in a heat recovery steam generator and runs a Rankine cycle on it: the gas turbine takes the high temperatures, the steam cycle the low ones, and together they pass 55–60 %.</p></article>
+      <article><h3>About the numbers</h3><p>[Illustrative data, for training only.] Steam properties come from a saturation table with an effective superheat heat capacity per pressure, within a few percent of full steam tables; the gas cycle uses the cold air standard (k 1.4, cp 1.005) with no pressure loss; the HRSG recovers exhaust heat down to a 110 °C stack at 92 % with a 25 K approach. Real plant uses full property routines, pressure losses, bleed steam and cooling air.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the board</h2>
+    <ul>
+      <li><b>Choose</b> the Rankine steam cycle, the Brayton gas turbine or the combined cycle. The flow board shows the state points with temperature, pressure, enthalpy and quality.</li>
+      <li><b>Move the sliders</b>: boiler pressure, superheat, condenser pressure, reheat, component efficiencies, pressure ratio, turbine inlet temperature, regenerator. Everything updates at once, including the T-s diagram and the sweep chart.</li>
+      <li><b>Sweep chart</b>: efficiency against the main design variable with the present setting marked, so you can see where you sit on the curve.</li>
+      <li><b>Record</b> readings to compare cycles in the tasks.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>Space</kbd> flow / pause · <kbd>R</kbd> record · <kbd>1</kbd>–<kbd>3</kbd> cycle · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

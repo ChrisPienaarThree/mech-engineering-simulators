@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Planetary Gears</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 12</span>
+    <h1>Planetary Gear Demonstrator</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Stopped</span>
+    <span class="pill ok" id="pillMode">—</span>
+    <span class="pill" id="pillRatio">ratio —</span>
+    <span class="pill warn hidden" id="pillAsm">Planets will not assemble</span>
+    <span class="pill amber hidden" id="pillClash">Adjacent planets clash</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Epicyclic gearset: sun, planets on a carrier, ring">
+    <div class="rig-head">
+      <h2>Gearset · the planet spins on its own axis while it orbits the sun</h2>
+      <span class="legend"><i class="sw brass"></i>sun <i class="sw water"></i>planet <i class="sw" style="background:var(--steel)"></i>ring <i class="sw good"></i>carrier <i class="sw taps"></i>marker and path <span class="pill" style="padding:.1em .5em">dashed = held</span></span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="readouts">
+      <div class="ro"><span class="k">Sun</span><span class="v" id="roS">—</span><span class="u">rpm · <span id="roSd">—</span> · T <span id="roTs">—</span> Nm</span></div>
+      <div class="ro"><span class="k">Carrier (orbit)</span><span class="v" id="roC">—</span><span class="u">rpm · <span id="roCd">—</span> · T <span id="roTc">—</span> Nm</span></div>
+      <div class="ro"><span class="k">Ring</span><span class="v" id="roR">—</span><span class="u">rpm · <span id="roRd">—</span> · T <span id="roTr">—</span> Nm</span></div>
+      <div class="ro"><span class="k">Planet spin</span><span class="v" id="roP">—</span><span class="u">rpm absolute · <span id="roPrel">—</span> rpm relative to the carrier</span></div>
+      <div class="ro"><span class="k">Speed ratio</span><span class="v" id="roRatio">—</span><span class="u">input / output · <span id="roRev">—</span></span></div>
+      <div class="ro"><span class="k">Planet "days per year"</span><span class="v" id="roDays">—</span><span class="u">spins per orbit (about the carrier axis)</span></div>
+      <div class="ro"><span class="k">Power</span><span class="v" id="roPin">—</span><span class="u">W in · <span id="roPout">—</span> W out · η <span id="roEta">—</span> %</span></div>
+      <div class="ro"><span class="k">Mesh frequency</span><span class="v" id="roMesh">—</span><span class="u">teeth/s at the sun–planet mesh · planet Ø <span id="roNp">—</span> teeth</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="grp-title">Gearset</div>
+      <div class="ctl"><label for="Ns">Sun teeth N<sub>s</sub> <output id="NsOut">24</output></label><input type="range" id="Ns" min="10" max="60" value="24" step="1"></div>
+      <div class="ctl"><label for="Nr">Ring teeth N<sub>r</sub> <output id="NrOut">72</output></label><input type="range" id="Nr" min="36" max="150" value="72" step="2"></div>
+      <div class="ctl"><label for="np">Planets <output id="npOut">3</output></label><input type="range" id="np" min="1" max="6" value="3" step="1"></div>
+      <div class="grp-title">Drive</div>
+      <div class="holdrow">
+        <div class="seg"><span>Hold</span><button data-hold="ring" class="on">Ring</button><button data-hold="carrier">Carrier</button><button data-hold="sun">Sun</button><button data-hold="none">None (differential)</button><button data-hold="lock">Lock sun to ring</button></div>
+        <div class="seg"><span>Drive</span><button class="in" data-in="sun">Sun</button><button class="in" data-in="carrier">Carrier</button><button class="in" data-in="ring">Ring</button></div>
+      </div>
+      <div class="ctl"><label for="rpm"><span id="rpmName">Input speed</span> <output id="rpmOut">60 rpm</output></label><input type="range" id="rpm" min="-300" max="300" value="60" step="5"></div>
+      <div class="ctl" id="ctlRpm2"><label for="rpm2"><span id="rpm2Name">Second input (ring)</span> <output id="rpm2Out">0 rpm</output></label><input type="range" id="rpm2" min="-300" max="300" value="0" step="5"></div>
+      <div class="ctl"><label for="T">Input torque <output id="TOut">10 Nm</output></label><input type="range" id="T" min="0" max="200" value="10" step="1"></div>
+      <div class="ctl"><label for="eta">Efficiency per mesh <output id="etaOut">98 %</output></label><input type="range" id="eta" min="90" max="100" value="98" step="0.5"></div>
+      <div class="ctl"><label for="tscale">Animation clock <output id="tscaleOut">×0.2</output></label><input type="range" id="tscale" min="0.02" max="1" value="0.2" step="0.02"></div>
+      <div class="ctl"><label class="chk"><input type="checkbox" id="trace" checked> Trace the path of a point on one planet</label></div>
+      <div class="ctl-actions">
+        <button class="act" id="btnRun">Run</button>
+        <button class="act ghost" id="btnStep">Step one sun tooth</button>
+        <button class="act ghost" id="btnRecord">Record reading</button>
+        <button class="act ghost" id="btnClearTrace">Clear path</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="reducer">Reducer · ring held, sun in</button>
+          <button class="mini" data-preset="star">Star · carrier held</button>
+          <button class="mini" data-preset="over">Overdrive · sun held, ring in</button>
+          <button class="mini" data-preset="diff">Differential · two inputs</button>
+          <button class="mini" data-preset="stall">Stop the carrier</button>
+          <button class="mini" data-preset="lock">Locked 1 : 1</button>
+          <button class="mini" data-preset="big">High ratio 10 : 1</button>
+          <button class="mini" data-preset="noasm">Won't assemble</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2>Speed nomograph · the lever analogy</h2><span class="legend">S, C, R on one straight line · C sits at N<sub>s</sub>/(N<sub>s</sub>+N<sub>r</sub>) of the way from S to R · held member at zero</span></div>
+      <canvas id="nomo" width="900" height="360" aria-label="Speed nomograph with sun, carrier and ring on a straight line"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Tabular method · Willis equation</h2><span class="legend">ω<sub>s</sub>·N<sub>s</sub> + ω<sub>r</sub>·N<sub>r</sub> = (N<sub>s</sub>+N<sub>r</sub>)·ω<sub>c</sub></span></div>
+      <div class="tablewrap"><table class="tabular" id="tabular"><thead><tr><th>Step</th><th>Sun</th><th>Carrier</th><th>Ring</th><th>Planet (own axis)</th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Speed of every member as the input turns · last revolutions</h2><span class="legend"><i class="sw brass"></i>sun <i class="sw good"></i>carrier <i class="sw" style="background:var(--steel)"></i>ring <i class="sw water"></i>planet spin</span></div>
+      <canvas id="speeds" width="900" height="300" aria-label="Bar chart of member speeds and torques"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Each reading stores the tooth counts, which member is held and driven, every speed and torque, the ratio and the assembly check.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="planetary-gears.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Tag</th><th>Ns</th><th>Np</th><th>Nr</th><th>Planets</th><th>Held</th><th>Driven</th><th>Sun rpm</th><th>Carrier rpm</th><th>Ring rpm</th><th>Planet rpm</th><th>Ratio</th><th>Ts Nm</th><th>Tc Nm</th><th>Tr Nm</th><th>Assembles</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>Three members, one equation</h3><p class="eq">ω<sub>s</sub> N<sub>s</sub> + ω<sub>r</sub> N<sub>r</sub> = (N<sub>s</sub> + N<sub>r</sub>) ω<sub>c</sub></p><p>Sun, carrier and ring share one relation, so the train has two degrees of freedom. Hold one member and the other two are geared together at a fixed ratio; drive two and the third takes the weighted average: that is a differential. The planets are the go-between: they never appear in the equation because their tooth count is fixed by geometry, N<sub>p</sub> = (N<sub>r</sub> − N<sub>s</sub>)/2.</p></article>
+      <article><h3>The planet as a planet</h3><p>Each planet does two things at once: it orbits with the carrier and it spins about its own pin. Its spin relative to the carrier comes from the sun mesh: (ω<sub>p</sub> − ω<sub>c</sub>) = −(ω<sub>s</sub> − ω<sub>c</sub>) N<sub>s</sub>/N<sub>p</sub>. The marker on one planet traces the sum of the two motions, a looping curve like a moon's path around the sun. The "days per year" readout is the number of spins per orbit.</p></article>
+      <article><h3>Three ways to use it</h3><p class="eq">Ring held: ω<sub>s</sub>/ω<sub>c</sub> = 1 + N<sub>r</sub>/N<sub>s</sub> &nbsp;·&nbsp; Carrier held: ω<sub>s</sub>/ω<sub>r</sub> = −N<sub>r</sub>/N<sub>s</sub> &nbsp;·&nbsp; Sun held: ω<sub>r</sub>/ω<sub>c</sub> = 1 + N<sub>s</sub>/N<sub>r</sub></p><p>Same gears, three ratios, one of them reversing. A gearbox selects them with brakes and clutches; lock any two members together and everything turns as one at 1 : 1.</p></article>
+      <article><h3>Torque</h3><p class="eq">T<sub>s</sub> : T<sub>r</sub> : T<sub>c</sub> = N<sub>s</sub> : N<sub>r</sub> : −(N<sub>s</sub> + N<sub>r</sub>)</p><p>Torques on the three members always sum to zero, and the held member takes a reaction: with the ring held and the sun driving, the carrier delivers (1 + N<sub>r</sub>/N<sub>s</sub>) times the sun torque and the ring bolts see N<sub>r</sub>/N<sub>s</sub> times it. Power in equals power out less the mesh losses.</p></article>
+      <article><h3>Assembly</h3><p>Planets can only be spaced equally if (N<sub>s</sub> + N<sub>r</sub>) divides by the number of planets; otherwise the teeth do not line up in the gaps. Adjacent planets must also clear each other: the tip circles must not touch. Both checks are shown live.</p></article>
+      <article><h3>The lever analogy</h3><p>Plot the three speeds on vertical axes and they lie on a straight line, with the carrier's axis placed N<sub>s</sub>/(N<sub>s</sub> + N<sub>r</sub>) of the way from sun to ring. Pin one point to zero, push another up, and read the third off the line. The tabular method does the same arithmetic: first turn everything together, then hold the carrier and let the simple train do its ratio, then add.</p></article>
+      <article><h3>About the numbers</h3><p>[Illustrative data, for training only.] Teeth are drawn as simple trapezoids at the correct pitch and phase so the meshes stay in step; efficiency is applied per mesh; inertia, backlash and load sharing are not modelled.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the demonstrator</h2>
+    <ul>
+      <li><b>Choose the gears</b>: sun and ring tooth counts (the planet count of teeth follows), and how many planets. The assembly check tells you whether they fit.</li>
+      <li><b>Hold one member and drive another</b>, set the speed and torque. Watch the marker on one planet trace its path while the planet spins and orbits. Slow the animation clock to follow the teeth.</li>
+      <li><b>Read the numbers</b>: every member's speed and torque, the ratio and direction, planet spins per orbit, power and mesh frequency. The nomograph and the tabular method show where they come from.</li>
+      <li><b>Differential</b>: hold nothing and drive two members; find the pair of speeds that stops the carrier.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>Space</kbd> run / stop · <kbd>.</kbd> step one tooth · <kbd>R</kbd> record · <kbd>1</kbd>–<kbd>3</kbd> hold ring / carrier / sun · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

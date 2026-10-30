@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PD Pump Skid</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 04</span>
+    <h1>Positive-Displacement Pump Skid</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Pump stopped</span>
+    <span class="pill" id="pillP">—</span>
+    <span class="pill amber hidden" id="pillRelief">Relief valve lifting</span>
+    <span class="pill amber hidden" id="pillPuls">High pulsation</span>
+    <span class="pill warn hidden" id="pillOver">Overpressure</span>
+    <span class="pill warn hidden" id="pillBurst">HOSE RUPTURED</span>
+    <span class="pill warn hidden" id="pillStall">Motor stalled</span>
+    <span class="pill warn hidden" id="pillSuc">Suction starved</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Positive-displacement pump skid with transparent lines">
+    <div class="rig-head">
+      <h2>Skid · transparent suction and discharge</h2>
+      <div class="seg" id="typeSeg"><button data-type="diaphragm" class="on">Diaphragm pump</button><button data-type="gear">Gear pump</button></div>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+    <div class="readouts" id="readouts"></div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head">
+        <h2>Close the discharge progressively · centrifugal against PD</h2>
+        <span class="legend"><i class="sw brass"></i>PD pump <i class="sw water"></i>centrifugal (same duty) <i class="sw taps"></i>relief set pressure <i class="sw good"></i>recorded PD points</span>
+      </div>
+      <canvas id="chart" width="900" height="380" aria-label="Pressure and flow against discharge valve opening for a positive-displacement and a centrifugal pump"></canvas>
+      <div class="chart-foot"><button class="act" id="btnDemo">Run the closure demonstration</button><span class="muted small">Closes the discharge valve from open to shut over 20 s and traces both pumps. Try it with the relief valve isolated.</span></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Discharge pressure · last 4 s</h2><span class="legend"><i class="sw brass"></i>at the gauge tapping <i class="sw water dim"></i>gauge reading (damped)</span></div>
+      <canvas id="strip" width="900" height="170" aria-label="Instantaneous discharge pressure trace"></canvas>
+    </div>
+
+    <div class="controls">
+      <div class="ctl">
+        <label for="speed">Pump speed <output id="speedOut">0</output></label>
+        <input type="range" id="speed" min="0" max="100" value="0" step="1">
+        <div class="ctl-foot"><span id="speedUnit"></span><span class="btns"><button class="mini" data-speed="0">Stop</button><button class="mini" data-speed="50">50 %</button><button class="mini" data-speed="100">100 %</button></span></div>
+      </div>
+      <div class="ctl">
+        <label for="stroke">Stroke length (diaphragm) <output id="strokeOut">100 %</output></label>
+        <input type="range" id="stroke" min="20" max="100" value="100" step="5">
+        <div class="ctl-foot"><span>Metering adjustment — flow ∝ stroke × speed</span></div>
+      </div>
+      <div class="ctl">
+        <label for="dthr">Discharge valve opening <output id="dthrOut">100 %</output></label>
+        <input type="range" id="dthr" min="0" max="100" value="100" step="1">
+        <div class="ctl-foot"><span>Close it progressively and watch the gauge</span><span class="btns"><button class="mini" data-dthr="100">Open</button><button class="mini" data-dthr="50">50 %</button><button class="mini" data-dthr="20">20 %</button><button class="mini" data-dthr="0">Shut</button></span></div>
+      </div>
+      <div class="ctl">
+        <label for="relief">Relief valve set pressure <output id="reliefOut">6.0 bar</output></label>
+        <input type="range" id="relief" min="2" max="12" value="6" step="0.5">
+        <div class="ctl-foot"><label class="chk"><input type="checkbox" id="reliefIso"> Relief valve isolated (never do this on a real skid)</label></div>
+      </div>
+      <div class="ctl two">
+        <div>
+          <label for="bpv">Back-pressure valve setting <output id="bpvOut">2.0 bar</output></label>
+          <input type="range" id="bpv" min="0" max="5" value="2" step="0.5">
+        </div>
+        <div>
+          <label for="charge">Dampener gas charge <output id="chargeOut">1.6 bar</output></label>
+          <input type="range" id="charge" min="0" max="6" value="1.6" step="0.1">
+          <div class="ctl-foot"><label class="chk"><input type="checkbox" id="dampIso"> Dampener isolated</label><label class="chk"><input type="checkbox" id="gaugeDamp" checked> Glycerine-filled gauge</label></div>
+        </div>
+      </div>
+      <div class="ctl two">
+        <div>
+          <label for="sthr">Suction valve opening <output id="sthrOut">100 %</output></label>
+          <input type="range" id="sthr" min="5" max="100" value="100" step="1">
+        </div>
+        <div class="ctl-actions">
+          <button class="act" id="btnCal">Calibration test: draw from column</button>
+          <button class="act" id="btnRecord">Record point</button>
+          <button class="act ghost" id="btnReset">Reset</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="data" role="tab">Readouts</button>
+    <button class="tab" data-tab="cal" role="tab">Calibration column</button>
+    <button class="tab" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-data"><div class="grid-data" id="dataGrid"></div></div>
+  <div class="tabpanel" id="tab-cal">
+    <div class="cal">
+      <div class="panel2">
+        <h3>Volumetric calibration</h3>
+        <p class="note">The suction is switched from the tank to the graduated column, the level is timed as it falls, and the measured flow is compared with the pump's theoretical displacement. The difference is slip past the check valves or gear clearances, and it grows with discharge pressure.</p>
+        <div class="grid-data" id="calGrid"></div>
+        <div class="btns" style="margin-top:8px"><button class="act" id="btnCal2">Start / stop test</button><button class="mini" id="btnRefill">Refill column</button></div>
+      </div>
+      <div class="panel2">
+        <h3>Test history</h3>
+        <div class="tablewrap"><table id="calTable"><thead><tr><th>#</th><th>Pump</th><th>Speed</th><th>Stroke %</th><th>P disch bar</th><th>Volume mL</th><th>Time s</th><th>Measured L/min</th><th>Theoretical L/min</th><th>η vol %</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+  </div>
+  <div class="tabpanel" id="tab-log">
+    <div class="log-tools"><span>Each row is one recorded operating point.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="pd-skid-log.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Pump</th><th>Speed</th><th>Stroke %</th><th>Disch. valve %</th><th>Relief</th><th>BPV bar</th><th>Dampener</th><th>Q L/min</th><th>P mean bar</th><th>P peak bar</th><th>Ripple %</th><th>Relief flow L/min</th><th>Torque %</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>Why a PD pump needs a relief valve</h3><p class="eq">Q<sub>PD</sub> ≈ V<sub>d</sub> · N · (1 − slip) &nbsp;— nearly independent of pressure</p><p>A centrifugal pump against a closed valve simply climbs to its shut-off head and stays there. A positive-displacement pump keeps delivering the same volume every stroke, so the pressure rises until something gives: the relief valve, the hose, the coupling or the motor. That is why a relief valve on the pump side of any isolation is mandatory, not optional.</p></article>
+      <article><h3>Pulsation and the dampener</h3><p>A single-acting diaphragm pump delivers in half-sine pulses and nothing on the suction stroke. A gas-charged dampener stores the peak and releases it between strokes; it works best charged to about 80 % of line pressure. Uncharged or isolated, the pressure ripple reappears, the gauge becomes unreadable and hoses fatigue.</p></article>
+      <article><h3>Back-pressure valve</h3><p>Metering accuracy depends on the check valves seating cleanly. A back-pressure valve holds a minimum discharge pressure so the pump always works against a positive head, even into an open tank or a siphoning line.</p></article>
+      <article><h3>Calibration column</h3><p class="eq">η<sub>vol</sub> = Q<sub>measured</sub> / (V<sub>d</sub> · N · stroke)</p><p>Timing the level in a graduated column is the standard field check of a metering pump. Volumetric efficiency falls as discharge pressure rises because slip past the check valves increases.</p></article>
+      <article><h3>Torque and current</h3><p class="eq">T ∝ V<sub>d</sub> · Δp &nbsp;·&nbsp; P<sub>shaft</sub> ∝ Q · Δp</p><p>PD pump torque is proportional to differential pressure and independent of speed, so an overpressure shows up first as rising motor current and finally as a stall.</p></article>
+      <article><h3>About the skid data</h3><p>[Illustrative skid data, for training only.] Diaphragm pump 50 mL/stroke, 20–120 strokes/min, single-acting; gear pump 8 mL/rev, 300–1 500 rpm. Relief valve adjustable 2–12 bar; hose rated 10 bar; motor stalls at about 14 bar; 500 mL calibration column. The comparison centrifugal has 3.4 bar shut-off and about 29 L/min run-out.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the skid</h2>
+    <ul>
+      <li><b>Start the pump</b> and watch the pulses travel down the transparent discharge line. Switch between diaphragm and gear to compare pulsation.</li>
+      <li><b>Close the discharge valve progressively</b> — by hand or with the demonstration button — and watch the PD pressure climb while the centrifugal trace flattens at its shut-off head. The relief valve lifts at its set pressure and returns flow to the tank.</li>
+      <li><b>Isolate the relief valve</b> and close the discharge again: the hose ruptures or the motor stalls. Reset to repair.</li>
+      <li><b>Dampener</b>: isolate it, or set its charge far from line pressure, and read the ripple on the trace and the gauge.</li>
+      <li><b>Calibration column</b>: draw from the column for a timed period and compare measured flow with the theoretical displacement.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>←</kbd><kbd>→</kbd> discharge valve · <kbd>↑</kbd><kbd>↓</kbd> speed · <kbd>D</kbd> demonstration · <kbd>R</kbd> record · <kbd>C</kbd> calibration test · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

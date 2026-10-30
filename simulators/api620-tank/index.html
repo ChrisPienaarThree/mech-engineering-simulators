@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>API 620 Tank Design Demonstrator</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 27</span>
+    <h1>API 620 Tank Design Demonstrator</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Running</span>
+    <span class="pill" id="pillState">—</span>
+    <span class="pill" id="pillTank">—</span>
+    <span class="pill" id="pillAnnex">Main body</span>
+    <span class="pill" id="pillFill">empty</span>
+    <span class="pill" id="pillVent">Vent normal</span>
+    <span class="pill warn hidden" id="pillOver">ELEMENT OVER ALLOWABLE</span>
+    <span class="pill warn hidden" id="pillAnch">Anchorage inadequate</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Tank elevation">
+    <div class="rig-head">
+      <h2 id="rigTitle">Low-pressure storage tank · elevation, wall thickness exaggerated · vapour space tinted by pressure · click a course, the roof, the knuckle or the ring</h2>
+      <span class="legend"><i class="sw steel"></i>plate <i class="sw taps"></i>failing <i class="sw brass"></i>product <i class="sw water"></i>test water <i class="sw good"></i>knuckle / ring</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="readouts">
+      <div class="ro"><span class="k">Working capacity</span><span class="v" id="roCap">—</span><span class="u">m³ to the design level · vapour space <span id="roVg">—</span> m³ · <span id="roKg">—</span> kg steel per m³</span></div>
+      <div class="ro" id="roT1Box"><span class="k">Bottom course</span><span class="v" id="roT1">—</span><span class="u">mm · required <span id="roT1req">—</span> · <span id="roT1gov">—</span> · T2 / T1 <span id="roT1f">—</span> kN/m</span></div>
+      <div class="ro" id="roSchedBox"><span class="k">Sidewall schedule</span><span class="v small" id="roSched">—</span><span class="u" id="roSchedNote">—</span></div>
+      <div class="ro" id="roRoofBox"><span class="k">Roof plate</span><span class="v" id="roRoof">—</span><span class="u" id="roRoofNote">—</span></div>
+      <div class="ro" id="roKnBox"><span class="k">Knuckle plate</span><span class="v" id="roKn">—</span><span class="u" id="roKnNote">—</span></div>
+      <div class="ro" id="roRingBox"><span class="k">Compression ring area to add</span><span class="v" id="roRing">—</span><span class="u" id="roRingNote">—</span></div>
+      <div class="ro" id="roUpBox"><span class="k">Uplift and anchors</span><span class="v" id="roUp">—</span><span class="u" id="roUpNote">—</span></div>
+      <div class="ro"><span class="k">Steel</span><span class="v" id="roMassT">—</span><span class="u">t total · sidewall <span id="roMassS">—</span> · roof and ring <span id="roMassR">—</span> · bottom <span id="roMassB">—</span></span></div>
+      <div class="ro" id="roScopeBox"><span class="k">Scope and material</span><span class="v small" id="roScope">—</span><span class="u" id="roScopeNote">—</span></div>
+      <div class="ro" id="roLiveBox"><span class="k">Live utilisation, worst element</span><span class="v" id="roLive">—</span><span class="u" id="roLiveNote">—</span></div>
+      <div class="ro" id="roSelBox"><span class="k">Selected element</span><span class="v small" id="roSel">click an element</span><span class="u" id="roSelNote">course, roof, knuckle or ring · then Thicker / Thinner / Auto</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="grp-title">Tank, product and pressure</div>
+      <div class="ctl"><label for="D">Diameter D <output id="DOut">30.0 m</output></label><input type="range" id="D" min="4" max="70" value="30" step="0.5"></div>
+      <div class="ctl"><label for="n">Sidewall courses <output id="nOut">6 courses</output></label><input type="range" id="n" min="1" max="12" value="6" step="1"></div>
+      <div class="ctl"><label for="hc">Course height <output id="hcOut">2.40 m</output></label><input type="range" id="hc" min="1.5" max="3" value="2.4" step="0.1"></div>
+      <div class="ctl"><label for="H">Design liquid level H <output id="HOut">13.5 m</output></label><input type="range" id="H" min="0" max="14.4" value="13.5" step="0.1"></div>
+      <div class="ctl"><label>Product (sets G, temperature, pressure) <select id="product"><option value="naphtha">Light naphtha, ambient</option><option value="blanket">Nitrogen-blanketed process liquid</option><option value="pentane">Pentane blend, warm, gas pad</option><option value="butane">Butane, refrigerated −5 °C</option><option value="ammonia" selected>Ammonia, refrigerated −33 °C</option><option value="propane">Propane, refrigerated −42 °C</option><option value="ethylene">Ethylene, refrigerated −104 °C</option><option value="lng">LNG, refrigerated −162 °C</option></select></label></div>
+      <div class="ctl"><label for="G">Specific gravity G <output id="GOut">0.68</output></label><input type="range" id="G" min="0.4" max="1.6" value="0.68" step="0.01"></div>
+      <div class="ctl"><label for="Tdes">Design metal temperature <output id="TdesOut">−33 °C</output></label><input type="range" id="Tdes" min="-170" max="130" value="-33" step="1"></div>
+      <div class="ctl"><label for="Pg">Design gas pressure Pg <output id="PgOut">10.0 kPa</output></label><input type="range" id="Pg" min="0" max="120" value="10" step="0.5"></div>
+      <div class="ctl"><label for="Pe">Design vacuum Pe <output id="PeOut">1.0 kPa</output></label><input type="range" id="Pe" min="0" max="10" value="1" step="0.25"></div>
+      <div class="grp-title">Plate</div>
+      <div class="ctl"><label>Material and allowable Sts <select id="mat"><option value="a283c">A283M Gr C · 114 MPa · to −7 °C</option><option value="a36">A36M · 120 MPa · to −7 °C</option><option value="a516_485">A516M Gr 485 impact tested · 145 MPa · to −29 °C</option><option value="a516_485n" selected>A516M Gr 485 normalised (Annex R) · 145 MPa · to −45 °C</option><option value="a537_1">A537M Cl 1 (Annex R) · 145 MPa · to −51 °C</option><option value="a553">A553M 9 % Ni (Annex Q) · 207 MPa · to −196 °C</option><option value="ss304">A240M 304 stainless (Annex Q) · 123 MPa</option><option value="al5083">5083-O aluminium (Annex Q) · 75 MPa</option></select></label></div>
+      <div class="ctl"><label>Joint efficiency E <select id="joint"><option value="full" selected>Fully radiographed · 1.00</option><option value="spot">Spot radiographed · 0.85</option><option value="none">Not radiographed · 0.70</option></select></label></div>
+      <div class="ctl"><label for="CA">Corrosion allowance <output id="CAOut">1.0 mm</output></label><input type="range" id="CA" min="0" max="6" value="1" step="0.5"></div>
+      <div class="grp-title">Roof, ring and anchors</div>
+      <div class="ctl"><label>Roof <select id="roof"><option value="dome" selected>Dome with compression ring</option><option value="tori">Torispherical (knuckle)</option><option value="cone">Cone with compression ring</option></select></label></div>
+      <div class="ctl" id="ctlRc"><label for="rc">Crown radius Rc <output id="rcOut">1.00 × D</output></label><input type="range" id="rc" min="0.6" max="1.5" value="1.0" step="0.05"></div>
+      <div class="ctl off" id="ctlRk"><label for="rk">Knuckle radius rk <output id="rkOut">0.10 × D</output></label><input type="range" id="rk" min="0.03" max="0.30" value="0.10" step="0.01"></div>
+      <div class="ctl off" id="ctlSlope"><label for="slope">Cone slope <output id="slopeOut">15°</output></label><input type="range" id="slope" min="5" max="45" value="15" step="1"></div>
+      <div class="ctl two"><div><label for="Lr">Roof live load <output id="LrOut">1.20 kPa</output></label><input type="range" id="Lr" min="0" max="2.5" value="1.2" step="0.05"></div><div><label for="S">Snow load <output id="SOut">0.00 kPa</output></label><input type="range" id="S" min="0" max="3" value="0" step="0.1"></div></div>
+      <div class="ctl" id="ctlRing"><label for="ringA">Compression ring section fitted <output id="ringAOut">12500 mm²</output></label><input type="range" id="ringA" min="0" max="60000" value="12500" step="500"></div>
+      <div class="ctl two"><div><label>Anchor bolt <select id="bolt"><option>M24</option><option>M30</option><option>M36</option><option selected>M42</option><option>M48</option><option>M56</option></select></label></div><div><label for="Nb">Bolts fitted <output id="NbOut">48 bolts</output></label><input type="range" id="Nb" min="0" max="160" value="48" step="2"></div></div>
+      <div class="grp-title">Operation</div>
+      <div class="ctl"><label>Fluid <select id="fluid"><option value="product" selected>Product at G</option><option value="water">Water (test)</option></select></label></div>
+      <div class="ctl"><label for="fillRate">Pump rate <output id="fillRateOut">500 m³/h</output></label><input type="range" id="fillRate" min="50" max="3000" value="500" step="50"></div>
+      <div class="ctl"><label for="tscale">Clock <output id="tscaleOut">×60</output></label><input type="range" id="tscale" min="1" max="600" value="60" step="1"></div>
+      <div class="ctl-actions">
+        <button class="act" id="btnRun">Running</button>
+        <button class="act ghost" id="btnStop">Pause</button>
+        <button class="act" id="btnFill">Fill to H</button>
+        <button class="act ghost" id="btnDrain">Pump out</button>
+        <button class="act ghost" id="btnPress">Pressurise to Pg</button>
+        <button class="act ghost" id="btnTest">Hydro-pneumatic test</button>
+        <button class="act ghost" id="btnVent">Vent: normal</button>
+        <button class="act ghost" id="btnResetP">Reset process</button>
+        <button class="act ghost" id="btnThick">Thicker ▲</button>
+        <button class="act ghost" id="btnThin">Thinner ▼</button>
+        <button class="act ghost" id="btnAuto">Auto</button>
+        <button class="act ghost" id="btnReset">Reset schedule</button>
+        <button class="act ghost" id="btnRecord">Record reading</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="base">30 m ammonia, 10 kPa, dome</button>
+          <button class="mini" data-preset="pressure">Pentane at 50 kPa</button>
+          <button class="mini" data-preset="tori">Torispherical roof</button>
+          <button class="mini" data-preset="cone">15° cone roof</button>
+          <button class="mini" data-preset="uplift">35 kPa blanket, too few bolts</button>
+          <button class="mini" data-preset="vacuum">6 kPa design vacuum</button>
+          <button class="mini" data-preset="lng">40 m LNG, 9 % Ni</button>
+          <button class="mini" data-preset="asme">110 kPa: past 15 psig</button>
+          <button class="mini" data-preset="test">Hydro-pneumatic test</button>
+          <button class="mini" data-preset="blockdrain">Blocked vent, pump out</button>
+          <button class="mini" data-preset="blockfill">Blocked vent, fill</button>
+          <button class="mini" data-preset="small">12 m naphtha tank</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2>Unit forces T1 and T2 along the meridian · design pressure with liquid, and the vacuum case</h2><span class="legend"><i class="sw water"></i>T1 meridional <i class="sw good"></i>T2 hoop <i class="sw brass"></i>junctions <i class="sw taps"></i>compression</span></div>
+      <canvas id="chart" width="900" height="300" aria-label="Unit forces along the meridian"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Plate schedule · roof, knuckle and sidewall courses, required against ordered</h2><span class="legend"><i class="sw water dim"></i>ordered <i class="sw brass"></i>tension need <i class="sw water"></i>compression need <i class="sw ink"></i>required</span></div>
+      <canvas id="schart" width="900" height="260" aria-label="Plate schedule"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Steel and anchor bolts against design gas pressure</h2><span class="legend"><i class="sw water"></i>total steel <i class="sw steel"></i>sidewall <i class="sw taps"></i>bolts needed <i class="sw brass"></i>this tank</span></div>
+      <canvas id="trace" width="900" height="210" aria-label="Pressure sweep"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Each reading stores geometry, product, temperature, pressures, material, joint efficiency, corrosion allowance, roof type, the plate schedule with bottom-course unit forces, roof and knuckle plate, compression ring force and area, design verdict, scope and annex, steel, capacity, uplift and bolts, and the live level, pressure and utilisation.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="api620-tank.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Tag</th><th>D</th><th>Hs</th><th>H</th><th>G</th><th>T °C</th><th>Pg</th><th>Pe</th><th>Material</th><th>E</th><th>CA</th><th>Roof</th><th>Schedule mm</th><th>Governs</th><th>C1 governs</th><th>C1 T2</th><th>C1 T1</th><th>Roof mm</th><th>Knuckle mm</th><th>Knuckle T2</th><th>Ring Q</th><th>Ring need</th><th>Ring</th><th>Design</th><th>Scope</th><th>Annex</th><th>Shell t</th><th>Total t</th><th>kg/m³</th><th>Cap m³</th><th>Uplift kN</th><th>Bolts</th><th>Needed</th><th>Bolt</th><th>Level</th><th>Pgas</th><th>Fluid</th><th>Util %</th><th>Failed</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>What API 620 covers</h3><p>Large welded tanks that store liquids with a gas or vapour space at up to 15 psig (103.4 kPa gauge) and metal temperatures up to 121 °C: refrigerated ammonia, LPG, ethylene and LNG, blanketed process liquids, volatile products. Below 2.5 psig (18 kPa) API 650 Annex F can also be used; above 15 psig the tank is a pressure vessel under a vessel code. Annex R covers refrigerated products from −51 °C to +4 °C in impact-tested carbon steels; Annex Q covers −51 °C down to −168 °C in 9 % nickel steel, stainless steel and aluminium.</p></article>
+      <article><h3>Membrane unit forces (5.10.2)</h3><p class="eq">T<sub>1</sub> = (R<sub>2</sub>/2) (P + W/A<sub>t</sub>) &nbsp;·&nbsp; T<sub>2</sub> = R<sub>2</sub> (P − T<sub>1</sub>/R<sub>1</sub>)</p><p>At any level of a surface of revolution the meridional force per unit length T<sub>1</sub> comes from vertical equilibrium of everything above the level: pressure on the horizontal area A<sub>t</sub> plus or minus the weight W of metal and liquid. The latitudinal (hoop) force T<sub>2</sub> then follows from the two radii of curvature: R<sub>1</sub> along the meridian and R<sub>2</sub> normal to the surface out to the axis. For the cylindrical sidewall R<sub>1</sub> is infinite so T<sub>2</sub> = P R, with P the gas pressure plus the liquid head at that level; T<sub>1</sub> = (R/2)(P<sub>g</sub> − W/A<sub>t</sub>) carries the gas pressure on the roof less the metal above. For a spherical dome R<sub>1</sub> = R<sub>2</sub> = R<sub>c</sub> and T<sub>1</sub> = T<sub>2</sub> = P R<sub>c</sub>/2. For a cone R<sub>2</sub> = R/sin θ, so a shallow cone has a large hoop force.</p></article>
+      <article><h3>Thickness for tension and compression (5.10.3)</h3><p class="eq">t = T / (S<sub>ts</sub> E) + c &nbsp;·&nbsp; compression: T/(t − c) ≤ S<sub>ca</sub> &nbsp;·&nbsp; S<sub>ca</sub> = 12 400 (t − c)/R up to 82.7 MPa, then rising to 103.4 MPa at (t − c)/R = 0.0175</p><p>A tensile unit force needs plate area T/(S E) where S<sub>ts</sub> is the lesser of 30 % of tensile strength and 60 % of yield and E is the joint efficiency from the radiography. A compressive unit force is limited by buckling, so the allowable compressive stress depends on the thickness-to-radius ratio, using the radius in the direction of the compression. Each element is designed for both load cases here: design pressure with the tank full, and the vacuum case with live or snow load and the weight of the metal on an empty tank.</p></article>
+      <article><h3>The knuckle and the compression ring (5.12)</h3><p class="eq">knuckle: T<sub>2</sub> = R (P − T<sub>1</sub>/r<sub>k</sub>) &lt; 0 when r<sub>k</sub> &lt; R/2 &nbsp;·&nbsp; ring: Q = R T<sub>1r</sub> cos φ &nbsp;·&nbsp; A<sub>c</sub> = Q / 103.4 MPa &nbsp;·&nbsp; w<sub>c</sub> = 0.6 √(R<sub>c</sub> t<sub>c</sub>), w<sub>h</sub> = 0.6 √(R t<sub>s</sub>)</p><p>Where the roof meets the sidewall the roof pulls inward. In a torispherical roof the small knuckle radius r<sub>k</sub> makes the hoop force there negative: the knuckle is in compression under internal pressure and its plate is sized by buckling — the signature API 620 result. With a dome or cone that meets the sidewall at an angle, the inward pull becomes a hoop compression Q in a ring at the junction. The ring region may count a width of roof and sidewall plate near the joint, and the rest must be added as an angle or bar until the area reaches Q divided by the 103.4 MPa (15 000 psi) compression allowable.</p></article>
+      <article><h3>Uplift and anchorage (5.11)</h3><p class="eq">U = P<sub>g</sub> π R² − W<sub>metal</sub> &nbsp;·&nbsp; bolts N ≥ U / (S<sub>b</sub> A<sub>s</sub>), spacing ≤ 3 m &nbsp;·&nbsp; test at 1.25 P<sub>g</sub></p><p>Gas pressure pushes up on the whole roof area. With the tank empty only the metal holds the shell down, so any pressure beyond a few kilopascals needs anchor bolts around the base, checked at design pressure and at the 1.25 × test pressure with the higher test allowable. The bolt count also follows from the maximum spacing. A blanketed tank at 35 kPa on a 30 m diameter carries 25 MN of uplift.</p></article>
+      <article><h3>The vapour space and the vent</h3><p class="eq">P<sub>abs</sub> V<sub>gas</sub> = constant &nbsp;·&nbsp; PV valve at +P<sub>g</sub> / −P<sub>e</sub></p><p>Filling compresses the vapour space and pumping out expands it; the pressure-vacuum valve relieves at the set points so the tank stays inside its design envelope. A blocked or frozen vent turns a pump-out into a vacuum in seconds and a fill into overpressure — the two classic ways a low-pressure tank is destroyed. The demonstrator models the vapour space isothermally, lets you block the vent, and fails the element that first passes 1.5 × its allowable.</p></article>
+      <article><h3>About the numbers</h3><p>[Illustrative data, for training only.] Allowable stresses are derived from the 30 % F<sub>u</sub> / 60 % F<sub>y</sub> rule rather than read from the tables; the Annex Q allowables, minimum design metal temperatures, joint efficiencies, the compressive-stress curve, the compression-ring participating widths, the anchor bolt allowables and the test factor follow the SI forms as commonly taught and must be checked against the edition of API 620 in force. Biaxial stress interaction (Figure 5-1), roof framing, insulation and the outer tank of a double-wall refrigerated tank, nozzles, seismic and wind are outside this demonstrator. Nothing here replaces a design by a competent engineer.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the demonstrator</h2>
+    <ul>
+      <li><b>Define the tank</b>: diameter, courses, liquid level, product (which sets gravity, temperature and a typical gas pressure), then pressure, vacuum, material, radiography and corrosion allowance. Every plate, the ring, uplift and the checks update at once.</li>
+      <li><b>Read the forces</b>: the first chart follows T1 and T2 from the apex of the roof down to the bottom for the pressure case (solid) and the vacuum case (dashed). Shaded values are compression.</li>
+      <li><b>Roof choice</b>: dome, torispherical or cone. The knuckle or the compression ring appears on the drawing; set the ring section with its slider until the region passes.</li>
+      <li><b>Override</b>: click a course, the roof or the knuckle, then Thicker / Thinner or the arrow keys. Auto returns to the calculated plate.</li>
+      <li><b>Operate</b>: Fill, Pump out, Pressurise, the hydro-pneumatic test (water to 1.25 × G × H, then air to 1.25 × Pg, utilisation shown against 1.25 × the allowable), or block the vent and watch the vapour-space pressure on the gauge. Elements turn hot as they pass their allowable and the tank fails at 1.5 ×.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>Space</kbd> run / pause · <kbd>F</kbd> fill · <kbd>E</kbd> pump out · <kbd>P</kbd> pressurise · <kbd>W</kbd> test · <kbd>V</kbd> block / open vent · <kbd>↑</kbd>/<kbd>↓</kbd> thicker / thinner · <kbd>A</kbd> auto · <kbd>R</kbd> record · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

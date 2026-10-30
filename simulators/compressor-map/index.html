@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Compressor Map Simulator</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 06</span>
+    <h1>Compressor Map Simulator</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Stopped</span>
+    <span class="pill phase" id="pillPhase">—</span>
+    <span class="pill" id="pillAsc">ASC auto</span>
+    <span class="pill" id="pillSurges">0 surges</span>
+    <span class="pill warn hidden" id="pillVib">Vibration high</span>
+    <span class="pill amber hidden" id="pillPower">Driver overload</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Process compressor with anti-surge recycle loop">
+    <div class="rig-head">
+      <h2>Compressor loop</h2>
+      <span class="legend"><i class="sw water"></i>gas flow <i class="sw good"></i>recycle <i class="sw taps"></i>reversed flow</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="readouts">
+      <div class="ro"><span class="k">Inlet flow</span><span class="v" id="roQ">—</span><span class="u">m³/h actual</span></div>
+      <div class="ro"><span class="k">Mass flow</span><span class="v" id="roM">—</span><span class="u">kg/s</span></div>
+      <div class="ro"><span class="k">Pressure ratio</span><span class="v" id="roPR">—</span><span class="u">P<sub>d</sub> / P<sub>s</sub></span></div>
+      <div class="ro" id="roSMbox"><span class="k">Surge margin</span><span class="v" id="roSM">—</span><span class="u">flow above surge line</span></div>
+      <div class="ro"><span class="k">Recycle valve</span><span class="v" id="roASV">—</span><span class="u">% open</span></div>
+      <div class="ro" id="roVibBox"><span class="k">Shaft vibration</span><span class="v" id="roVib">—</span><span class="u">µm p-p</span></div>
+      <div class="ro"><span class="k">Speed</span><span class="v" id="roN">—</span><span class="u">rpm</span></div>
+      <div class="ro" id="roPBox"><span class="k">Shaft power</span><span class="v" id="roP">—</span><span class="u">kW · T<sub>d</sub> <span id="roT2">—</span> °C</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="ctl"><label for="ps"><span>Suction pressure P<sub>s</sub></span> <output id="psOut">5.0 bar a</output></label><input type="range" id="ps" min="2" max="8" value="5" step="0.1"></div>
+      <div class="ctl"><label for="phdr">Discharge header pressure <output id="phdrOut">11.0 bar a</output></label><input type="range" id="phdr" min="6" max="14" value="11" step="0.1"></div>
+      <div class="ctl"><label for="nsp">Speed setpoint <output id="nspOut">100 %</output></label><input type="range" id="nsp" min="60" max="105" value="100" step="1"></div>
+      <div class="ctl"><label for="demand">Process demand (process valve) <output id="demandOut">70 %</output></label><input type="range" id="demand" min="0" max="100" value="70" step="1"></div>
+      <div class="ctl"><label for="stroke">Recycle valve response — full stroke <output id="strokeOut">2.0 s</output></label><input type="range" id="stroke" min="0.5" max="30" value="2" step="0.5"></div>
+      <div class="ctl"><label for="margin">Surge control margin <output id="marginOut">10 %</output></label><input type="range" id="margin" min="3" max="25" value="10" step="1"></div>
+      <div class="ctl asc">
+        <label>Anti-surge controller</label>
+        <div class="ascrow">
+          <div class="seg" id="ascSeg"><button data-asc="auto" class="on">Auto</button><button data-asc="manual">Manual</button></div>
+          <div class="manual" id="manualBox"><label for="asvMan">Manual opening <output id="asvManOut">0 %</output></label><input type="range" id="asvMan" min="0" max="100" value="0" step="1"></div>
+        </div>
+      </div>
+      <div class="ctl-actions">
+        <button class="act" id="btnStart">Start</button>
+        <button class="act ghost" id="btnStop">Stop</button>
+        <button class="act ghost hidden" id="btnReset">Reset trip</button>
+        <button class="act ghost" id="btnRecord">Record point</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="design">Design point</button>
+          <button class="mini" data-preset="sequence">Surge sequence (slow valve)</button>
+          <button class="mini" data-preset="closeProc">Close the process valve</button>
+          <button class="mini" data-preset="header">Header pressure creeps up</button>
+          <button class="mini" data-preset="speed">Speed cut to 85 %</button>
+          <button class="mini" data-preset="lowPs">Suction pressure falls</button>
+          <button class="mini" data-preset="manual">ASC off — recover by hand</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2>Compressor map · pressure ratio against inlet flow</h2>
+        <span class="legend"><i class="sw steel"></i>speed lines <i class="sw taps"></i>surge line <i class="sw taps dash"></i>surge control line <i class="sw warn"></i>choke line <i class="sw brass"></i>system line <i class="sw water"></i>operating point</span></div>
+      <canvas id="map" width="900" height="440" aria-label="Compressor map with surge line, choke line, speed lines and the operating point"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Traces · last 60 s</h2>
+        <span class="legend"><span class="ph normal">normal</span><span class="ph holding">on control line</span><span class="ph approach">approaching surge</span><span class="ph surge">surge</span><span class="ph recovery">recovery</span><span class="ph choke">choke</span></span></div>
+      <canvas id="trace" width="900" height="330" aria-label="Pressure, flow, recycle valve and vibration traces"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="events" role="tab">Event log <span class="count" id="evCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Recorded points and automatic surge / trip rows. Each row stores the operating conditions, the map position and the protection state.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="compressor-map-log.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>t s</th><th>Tag</th><th>Ps bar</th><th>Pd bar</th><th>PR</th><th>Q m³/h</th><th>m kg/s</th><th>rpm</th><th>SM %</th><th>ASV %</th><th>Vib µm</th><th>kW</th><th>Phase</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-events"><ul class="events" id="events"></ul></div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>Reading the map</h3><p>Each speed line is the pressure ratio the compressor can produce against inlet flow at that speed. The line ends on the left at the <b>surge line</b> (the peak of the curve) and on the right at the <b>choke line</b>, where the gas reaches sonic velocity in the narrowest passage and no more flow will pass. The compressor can only run on the falling part between them. Where the operating point sits on that line is decided by the process: the intersection with the <b>system line</b>.</p></article>
+      <article><h3>Why surge happens</h3><p>Left of the peak the curve slopes the wrong way: less flow gives less pressure. The discharge volume is still at the higher pressure, so it blows back through the machine, flow reverses, the discharge pressure collapses, forward flow re-establishes near choke, the volume recharges and the cycle repeats every few seconds. Every reversal loads the thrust bearing backwards and heats the gas. A few cycles are survivable; sustained surge is not.</p><p class="eq">dm/dt = (A/L)·(P<sub>c</sub>(m) − P<sub>plenum</sub>) &nbsp;·&nbsp; dP<sub>plenum</sub>/dt = (a²/V)·(m − m<sub>process</sub> − m<sub>recycle</sub>)</p></article>
+      <article><h3>Four ways to walk into surge</h3><p><b>Discharge pressure up</b>: the header rises, the point slides up and left along the speed line. <b>Process demand down</b>: less flow taken, same effect. <b>Suction pressure down</b>: the required pressure ratio P<sub>d</sub>/P<sub>s</sub> rises even though nothing downstream changed. <b>Speed down</b>: the whole curve shrinks (flow ∝ N, head ∝ N²) and can no longer meet the header. Watch the operating point: in every case it moves toward the surge line.</p></article>
+      <article><h3>Surge control</h3><p>The anti-surge controller measures flow (orifice ΔP) and pressures, not speed, and computes the distance to the surge line. It holds the point on a <b>surge control line</b> a margin to the right, typically about 10 % in flow, by opening the <b>recycle valve</b> so the compressor moves more gas than the process takes. Two protections sit behind the PI action: a quick-open step when flow falls faster than a process can explain, and a surge counter that trips the machine if the valve is losing.</p><p class="eq">SM = (Q − Q<sub>surge</sub>) / Q<sub>surge</sub> &nbsp;·&nbsp; Q<sub>surge</sub> ∝ N &nbsp;·&nbsp; head<sub>surge</sub> ∝ N²</p></article>
+      <article><h3>Valve response time is the whole game</h3><p>A disturbance moves the point toward surge in seconds; a surge cycle lasts two to five seconds. An anti-surge valve is specified to stroke fully open in one to two seconds, with a slower close so the controller does not chase it. Set the stroke to 15 s in this simulator and the identical disturbance surges the machine several times before the recycle catches up; at 2 s it never crosses the line.</p></article>
+      <article><h3>What the vibration probe sees</h3><p>Approaching surge, rotating stall cells make the shaft vibration rise before anything else changes. Each surge cycle gives a large, broadband, low-frequency burst as the flow reverses and the thrust load flips. Near choke the flow separates and vibration rises again, more gently. Alarm and trip levels here are illustrative for a 10 000 rpm machine.</p></article>
+      <article><h3>About the machine data</h3><p>[Illustrative data, for training only.] Single-stage centrifugal process compressor, nitrogen-like gas (M = 28, k = 1.4), design 8 000 m³/h actual inlet flow, pressure ratio 2.4 at 10 000 rpm and 5 bar a suction, about 1.4 MW; polytropic efficiency 0.80 at best point. Speed lines follow the fan laws; the curve shape is a Moore–Greitzer cubic with a stonewall. Discharge volume 8 m³. All numbers are chosen to show the mechanisms clearly, not measured on any real machine.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the simulator</h2>
+    <ul>
+      <li><b>Start</b> the compressor. It runs up with the recycle valve open and the anti-surge controller (ASC) closes the valve as the process takes the flow. Watch the operating point on the map settle right of the surge control line.</li>
+      <li><b>Push it toward surge</b> with any of the four sliders: suction pressure down, header pressure up, speed down, process demand down. The status pill changes from normal to <b>approaching surge</b> as the point enters the control band, and to <b>surge</b> when the flow reverses.</li>
+      <li><b>Recycle valve response</b> sets how fast the anti-surge valve can move. Try the same scenario at 2 s and at 15 s. Put the ASC in <b>Manual</b> to protect the machine yourself, or to let it surge.</li>
+      <li><b>Traces</b> show discharge and suction pressure, inlet flow with the surge control flow, recycle valve position and shaft vibration, with a phase band along the top. A vibration trip or the surge counter stops the machine.</li>
+      <li><b>Scenarios</b> under the controls ramp the process for you; "Surge sequence" plays normal → approaching → surge → recovery in about a minute.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>↑</kbd><kbd>↓</kbd> speed · <kbd>←</kbd><kbd>→</kbd> process demand · <kbd>S</kbd> start / stop · <kbd>M</kbd> auto / manual · <kbd>R</kbd> record · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>
