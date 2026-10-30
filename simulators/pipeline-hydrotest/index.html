@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pipeline Hydrostatic Test Bench</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 29</span>
+    <h1>Pipeline Hydrostatic Test Bench</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Running</span>
+    <span class="pill" id="pillPhase">Empty</span>
+    <span class="pill" id="pillSec">—</span>
+    <span class="pill amber hidden" id="pillPeople">Keep people out: above 50 % SMYS (841.36)</span>
+    <span class="pill warn hidden" id="pillYield">Yielding: P–V line has deviated (Appendix N5)</span>
+    <span class="pill warn hidden" id="pillBurst">RUPTURE</span>
+    <span class="pill ok hidden" id="pillHold">2 h strength hold complete</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Pipeline elevation profile and test sections">
+    <div class="rig-head">
+      <h2>Route profile · elevation against distance · click the profile to add or remove a test-section break</h2>
+      <span class="legend"><i class="sw water"></i>below 72 % SMYS <i class="sw good"></i>72–90 % <i class="sw brass"></i>90–100 % <i class="sw taps"></i>above 100 % SMYS <i class="sw steel"></i>other sections</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="readouts">
+      <div class="ro" id="roGaugeBox"><span class="k">Gauge at the test head</span><span class="v" id="roGauge">—</span><span class="u" id="roGaugeNote">—</span></div>
+      <div class="ro" id="roHighBox"><span class="k">High point</span><span class="v" id="roHigh">—</span><span class="u" id="roHighNote">—</span></div>
+      <div class="ro" id="roLowBox"><span class="k">Low point hoop stress</span><span class="v" id="roLow">—</span><span class="u" id="roLowNote">—</span></div>
+      <div class="ro"><span class="k">Water pumped</span><span class="v" id="roVol">—</span><span class="u" id="roVolNote">—</span></div>
+      <div class="ro"><span class="k">Water temperature</span><span class="v" id="roTemp">—</span><span class="u" id="roTempNote">—</span></div>
+      <div class="ro" id="roHoldBox"><span class="k">Strength hold (841.321)</span><span class="v" id="roHold">—</span><span class="u" id="roHoldNote">—</span></div>
+      <div class="ro" id="roDriftBox"><span class="k">Pressure change in the hold</span><span class="v small" id="roDrift">—</span><span class="u" id="roDriftNote">—</span></div>
+      <div class="ro" id="roVerdictBox"><span class="k">Test result</span><span class="v small" id="roVerdict">—</span><span class="u" id="roVerdictNote">—</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="grp-title">Pipe and design</div>
+      <div class="ctl"><label>Outside diameter <select id="OD"><option value="219.1">DN 200 · 219.1 mm</option><option value="323.9">DN 300 · 323.9 mm</option><option value="406.4" selected>DN 400 · 406.4 mm</option><option value="610">DN 600 · 610.0 mm</option><option value="914">DN 900 · 914.0 mm</option></select></label></div>
+      <div class="ctl"><label>Wall <select id="wt"><option>4.8</option><option selected>5.6</option><option>6.4</option><option>7.1</option><option>7.9</option><option>8.7</option><option>9.5</option><option>11.1</option><option>12.7</option><option>14.3</option><option>15.9</option><option>19.1</option></select></label></div>
+      <div class="ctl"><label>Grade (SMYS) <select id="grade"><option value="290">X42 · 290 MPa</option><option value="359" selected>X52 · 359 MPa</option><option value="414">X60 · 414 MPa</option><option value="448">X65 · 448 MPa</option><option value="483">X70 · 483 MPa</option></select></label></div>
+      <div class="ctl"><label for="MAOP">Required MAOP <output id="MAOPOut">70 bar</output></label><input type="range" id="MAOP" min="20" max="140" value="70" step="1"></div>
+      <div class="ctl"><label>Location class (Table 841.322(f)) <select id="cls"><option value="1d1">Class 1 Div 1 · water 1.25 × MAOP</option><option value="1d2" selected>Class 1 Div 2 · water 1.1 × MAOP</option><option value="2">Class 2 · water 1.25 × MAOP</option><option value="3">Class 3 or 4 · water 1.40 × MAOP</option></select></label></div>
+      <div class="ctl"><label for="lim">Maximum hoop at low point <output id="limOut">100 % SMYS</output></label><input type="range" id="lim" min="80" max="110" value="100" step="1"></div>
+
+      <div class="grp-title">Fill and environment</div>
+      <div class="ctl"><label>Fill method (N3) <select id="fillm"><option value="pig" selected>Behind a pig (sphere) · little air</option><option value="vent">No pig, vent the high points · some air</option><option value="none">No pig, no venting · much air</option></select></label></div>
+      <div class="ctl"><label for="Tfill">Fill water temperature <output id="TfillOut">24 °C</output></label><input type="range" id="Tfill" min="2" max="35" value="24" step="1"></div>
+      <div class="ctl"><label for="Tg">Ground temperature at pipe depth <output id="TgOut">17 °C</output></label><input type="range" id="Tg" min="2" max="30" value="17" step="1"></div>
+      <div class="ctl"><label for="expo">Pipe exposed to the sun <output id="expoOut">0 %</output></label><input type="range" id="expo" min="0" max="40" value="0" step="1"></div>
+      <div class="ctl"><label for="Qp">Pressure pump rate <output id="QpOut">150 L/min</output></label><input type="range" id="Qp" min="20" max="600" value="150" step="10"></div>
+      <div class="ctl"><label for="tscale">Clock <output id="tscaleOut">×120</output></label><input type="range" id="tscale" min="1" max="1200" value="120" step="1"></div>
+
+      <div class="grp-title">Test the selected section</div>
+      <div class="ctl"><label>Section <select id="sec"></select></label></div>
+      <div class="ctl"><label for="target">Pump to (gauge at the head) <output id="targetOut">0 bar</output></label><input type="range" id="target" min="0" max="200" value="0" step="0.5"></div>
+      <div class="ctl-actions">
+        <button class="act" id="btnFill">Fill section</button>
+        <button class="act ghost" id="btn80">Pressurise to 80 %</button>
+        <button class="act ghost" id="btnTest">Pressurise to test</button>
+        <button class="act ghost" id="btnPump">Pump to target</button>
+        <button class="act ghost" id="btnStop">Stop pump</button>
+        <button class="act ghost" id="btnBleed">Depressurise</button>
+        <button class="act ghost" id="btnAccept">Accept test</button>
+        <button class="act ghost" id="btnReject">Reject: leak</button>
+        <button class="act ghost" id="btnReset">Drain and reset section</button>
+        <button class="act ghost" id="btnPause">Pause</button>
+        <button class="act ghost" id="btnRecord">Record reading</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="base">24 km, one section, 380 m of relief</button>
+          <button class="mini" data-preset="split">Same line in four sections</button>
+          <button class="mini" data-preset="air">Filled without a pig</button>
+          <button class="mini" data-preset="cold">Warm water into cold ground</button>
+          <button class="mini" data-preset="sun">Exposed pipe in the sun</button>
+          <button class="mini" data-preset="leakA">Section with a test result to judge (A)</button>
+          <button class="mini" data-preset="leakB">Section with a test result to judge (B)</button>
+          <button class="mini" data-preset="yield">Pump into yield</button>
+          <button class="mini" data-preset="gouge">Construction damage in the line</button>
+          <button class="mini" data-preset="class3">Class 3 town section, 1.4 × MAOP</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2>Pressure against volume pumped · the straight line, then deviation (Appendix N5)</h2><span class="legend"><i class="sw water"></i>readings <i class="sw steel"></i>straight-line fit <i class="sw taps"></i>2 × strokes / 0.2 % volume</span></div>
+      <canvas id="chart" width="900" height="270" aria-label="Pressure against volume"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Hold log · gauge pressure and water temperature against time</h2><span class="legend"><i class="sw water"></i>gauge <i class="sw good"></i>temperature-corrected <i class="sw brass"></i>water °C <i class="sw taps"></i>minimum at head</span></div>
+      <canvas id="schart" width="900" height="230" aria-label="Hold log"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Along the section · test pressure at every point against the limits</h2><span class="legend"><i class="sw water"></i>pressure now <i class="sw good"></i>minimum test pressure <i class="sw taps"></i>pressure at the hoop limit <i class="sw brass"></i>elevation</span></div>
+      <canvas id="trace" width="900" height="210" aria-label="Pressure along the section"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Each reading stores the section, its elevation range, required and achieved test pressures, low-point stress, hold time, pressure and temperature change in the hold, air, yield points, your decision and the MAOP the test supports.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="pipeline-hydrotest.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Tag</th><th>Section km</th><th>Δz m</th><th>TP min bar</th><th>Head max</th><th>High min</th><th>Low max %SMYS</th><th>Hold h</th><th>ΔP bar</th><th>ΔT °C</th><th>ΔP temp</th><th>Air %</th><th>2× strokes</th><th>0.2 % vol</th><th>Decision</th><th>Correct</th><th>MAOP bar</th><th>Phase</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>Strength test after construction (841.32)</h3><p class="eq">at least 2 h, for lines to operate at 30 % SMYS or more (841.321)</p><p>Test pressure by location class (841.322, Table 841.322(f)): Class 1 Division 1 water 1.25 × design pressure; Division 2 air, gas or water 1.1 × MAOP; Class 2 air or water 1.25 × MAOP; Classes 3 and 4 water 1.40 × MAOP. The MAOP is the lesser of the design pressure and the test pressure divided by that factor. Choose the test level knowing that it caps the MAOP if the location class later changes (841.322(f), 854).</p></article>
+      <article><h3>Test sections and elevation (Appendix N2)</h3><p class="eq">p(x) = p<sub>head</sub> + ρ g (z<sub>head</sub> − z(x)) &nbsp;·&nbsp; 0.0981 bar per metre of water</p><p>The minimum test pressure must be reached at the high point; the low point sees the most pressure. Split the line where the elevation range would push the low point past the hoop limit. Each section is filled, pressurised and held separately.</p></article>
+      <article><h3>Filling (N3)</h3><p>Fill continuously behind one or more pigs or spheres to keep air out, meter the water, and let the water temperature settle to the ground before the hold. Trapped air is compressible: the first bars take many strokes and a small leak is harder to see.</p></article>
+      <article><h3>Pressurising (N4)</h3><p class="eq">to ≤ 80 % of test pressure → hold, look for major leaks → uniform rate to test pressure with a P–V plot → hold, adding water as needed to keep the minimum</p><p>Above 400 psig (27.6 bar) keep people not involved out of the test area (N2(a)); from 50 % SMYS up to the test stress and back to MAOP, keep persons not working on the test out (841.36).</p></article>
+      <article><h3>Finding yield (N5)</h3><p class="eq">yield: strokes per bar = 2 × the straight-line value &nbsp;·&nbsp; or deviation volume = 0.002 × fill volume</p><p>Below the elastic limit, volume and pressure follow a straight line (pipe expansion plus water compressibility). When pipe somewhere in the section starts to yield, each bar takes more water. Above 100 % SMYS in a section, one of these two rules limits the test pressure (N5(c)).</p></article>
+      <article><h3>Temperature or leak? (N6)</h3><p class="eq">ΔP ≈ (β<sub>water</sub> − 2α<sub>steel</sub>) / (D(1−ν²)/(E t) + κ<sub>water</sub>) · ΔT &nbsp;≈ 2 to 3 bar per °C at 15–25 °C</p><p>Water expands far more than steel, so a degree of warming raises the pressure by bars. Correct the hold pressure for the temperature change before deciding: a leak is the change you cannot explain. If a leak is shown, reduce pressure, find and repair it, then start a new hold at full test pressure.</p></article>
+      <article><h3>Records (N7)</h3><p>Test medium, pressure, duration, date, pressure chart and log, P–V plot, pressures at the high and low points, elevation of the gauge, people, weather, pipe data, what each section contains, leaks and failures. The data log below holds most of these.</p></article>
+      <article><h3>About the numbers</h3><p>[Illustrative data, for training only.] Clause numbers follow ASME B31.8-2003 (the edition in the course folder). The route, the actual yield strengths, the leaks, the damage and the material model (bilinear with 4 GPa hardening, burst at 1.25 × actual yield) are invented. Water properties are fitted curves good to a few per cent between 4 and 35 °C.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the test bench</h2>
+    <ul>
+      <li><b>Plan the sections</b>: the profile shows 24 km of line with 380 m of relief. Click the profile to add or remove section breaks. The lower chart shows whether the high point can reach the minimum test pressure without the low point passing the hoop limit.</li>
+      <li><b>Fill</b> the selected section, then <b>Pressurise to 80 %</b> and hold to look for big leaks, then <b>Pressurise to test</b>. Watch the P–V plot: a straight line means elastic pipe.</li>
+      <li><b>Hold</b> for at least 2 hours with the high point above the minimum. Use the clock to speed time up. Top up with Pump to target if the pressure falls.</li>
+      <li><b>Judge</b> the hold: correct the pressure change for the temperature change, then Accept the test or Reject it for a leak.</li>
+      <li><b>Record</b> each section. The scenarios load faults to find: air, cold ground, sun, leaks, yielding pipe and construction damage.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>Space</kbd> run / pause · <kbd>F</kbd> fill · <kbd>T</kbd> to test · <kbd>S</kbd> stop pump · <kbd>R</kbd> record · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>
