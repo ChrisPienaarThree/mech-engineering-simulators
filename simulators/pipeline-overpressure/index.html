@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pressure Reduction Station Simulator</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 31</span>
+    <h1>Pressure Reduction Station Simulator</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill run" id="pillRun">Running</span>
+    <span class="pill" id="pillClock">—</span>
+    <span class="pill" id="pillCtl">—</span>
+    <span class="pill warn hidden" id="pillOver">ABOVE ALLOWED OVERPRESSURE (845.411)</span>
+    <span class="pill amber hidden" id="pillMaop">Above MAOP</span>
+    <span class="pill amber hidden" id="pillSSV">Slam-shut tripped: supply lost</span>
+    <span class="pill amber hidden" id="pillLow">Low pressure to customers</span>
+    <span class="pill amber hidden" id="pillVent">Relief venting gas</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Pressure reduction station schematic">
+    <div class="rig-head">
+      <h2>Let-down station · heater, slam-shut, monitor and worker regulators, relief, downstream line pack and customers</h2>
+      <span class="legend"><i class="sw water"></i>gas flowing <i class="sw good"></i>open <i class="sw taps"></i>closed or failed <i class="sw brass"></i>sensing line <i class="sw steel"></i>pipe</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="readouts">
+      <div class="ro" id="roP2Box"><span class="k">Outlet pressure</span><span class="v" id="roP2">—</span><span class="u" id="roP2Note">—</span></div>
+      <div class="ro" id="roMaxBox"><span class="k">Highest since reset</span><span class="v" id="roMax">—</span><span class="u" id="roMaxNote">—</span></div>
+      <div class="ro"><span class="k">Flow</span><span class="v" id="roQ">—</span><span class="u" id="roQNote">—</span></div>
+      <div class="ro" id="roTBox"><span class="k">Outlet gas temperature</span><span class="v" id="roT">—</span><span class="u" id="roTNote">—</span></div>
+      <div class="ro" id="roVelBox"><span class="k">Outlet velocity at peak</span><span class="v" id="roVel">—</span><span class="u" id="roVelNote">—</span></div>
+      <div class="ro" id="roRelBox"><span class="k">Relief capacity</span><span class="v small" id="roRel">—</span><span class="u" id="roRelNote">—</span></div>
+      <div class="ro"><span class="k">Gas vented</span><span class="v" id="roVent">—</span><span class="u" id="roVentNote">—</span></div>
+      <div class="ro" id="roEvtBox"><span class="k">Last event</span><span class="v small" id="roEvt">—</span><span class="u" id="roEvtNote">—</span></div>
+      <div class="checks" id="checks" aria-label="Design checks"></div>
+    </div>
+
+    <div class="controls">
+      <div class="grp-title">System</div>
+      <div class="ctl"><label>Downstream system <select id="sys"><option value="dist" selected>Distribution lateral DN 200, MAOP 19 bar</option><option value="spur">Transmission spur DN 400 X52 6.4, MAOP 50 bar</option><option value="old">Old spur DN 400 4.8 X42, MAOP 55 bar (80 % SMYS)</option></select></label></div>
+      <div class="ctl"><label for="P1">Inlet pressure <output id="P1Out">70 bar</output></label><input type="range" id="P1" min="30" max="85" value="70" step="0.5"></div>
+      <div class="ctl"><label for="Qpk">Peak demand <output id="QpkOut">25 000 Sm³/h</output></label><input type="range" id="Qpk" min="2000" max="60000" value="25000" step="1000"></div>
+      <div class="ctl"><label for="Tin">Inlet gas temperature <output id="TinOut">15 °C</output></label><input type="range" id="Tin" min="-5" max="35" value="15" step="1"></div>
+      <div class="ctl"><label class="chk"><input type="checkbox" id="heat" checked> Water-bath heater on (outlet at least 5 °C)</label></div>
+      <div class="ctl"><label>Station outlet pipe <select id="dnOut"><option value="102.3">DN 100</option><option value="154.1" selected>DN 150</option><option value="202.7">DN 200</option><option value="254.5">DN 250</option></select></label></div>
+
+      <div class="grp-title">Protection and set points (gauge, bar)</div>
+      <div class="ctl"><label for="Sw">Worker regulator set <output id="SwOut">16.0</output></label><input type="range" id="Sw" min="5" max="60" value="16" step="0.1"></div>
+      <div class="ctl"><label class="chk"><input type="checkbox" id="hasMon" checked> Monitor regulator installed</label><label for="Sm">Monitor set <output id="SmOut">17.0</output></label><input type="range" id="Sm" min="5" max="62" value="17" step="0.1"></div>
+      <div class="ctl"><label class="chk"><input type="checkbox" id="hasSSV" checked> Slam-shut installed</label><label for="Sssv">Slam-shut trip <output id="SssvOut">19.0</output></label><input type="range" id="Sssv" min="5" max="66" value="19" step="0.1"></div>
+      <div class="ctl"><label for="Srv">Relief valve set <output id="SrvOut">18.0</output></label><input type="range" id="Srv" min="5" max="64" value="18" step="0.1"></div>
+      <div class="ctl"><label for="Crel">Relief capacity at full lift <output id="CrelOut">600 Sm³/h</output></label><input type="range" id="Crel" min="0" max="80000" value="600" step="100"></div>
+      <div class="ctl"><label>Relief isolation valve (845.34) <select id="rvIso"><option value="locked" selected>Locked open</option><option value="closed">Closed and forgotten</option></select></label></div>
+      <div class="ctl"><label>Sensing lines (845.36) <select id="sense"><option value="sep" selected>Separate line to each regulator</option><option value="shared">One shared line</option></select></label></div>
+      <div class="ctl"><label for="tscale">Clock <output id="tscaleOut">×60</output></label><input type="range" id="tscale" min="1" max="600" value="60" step="1"></div>
+
+      <div class="grp-title">Inject a failure</div>
+      <div class="ctl"><label>Failure <select id="fail"><option value="wOpen">Worker fails wide open (diaphragm)</option><option value="wShut">Worker fails shut</option><option value="mOpen">Monitor stuck open (hidden)</option><option value="sense">Sensing line severed by excavation</option><option value="trip">Customer plant trips: demand to zero</option><option value="surge">Upstream surge: inlet +12 bar</option><option value="ssvStick">Slam-shut fails to trip</option></select></label></div>
+      <div class="ctl-actions">
+        <button class="act" id="btnInject">Inject</button>
+        <button class="act ghost" id="btnRepair">Repair and reset slam-shut</button>
+        <button class="act ghost" id="btnClearMax">Reset highest reading</button>
+        <button class="act ghost" id="btnPause">Pause</button>
+        <button class="act ghost" id="btnRecord">Record reading</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="base">Normal day, worker + monitor + slam-shut</button>
+          <button class="mini" data-preset="wopen">Worker fails open</button>
+          <button class="mini" data-preset="hidden">Hidden monitor failure</button>
+          <button class="mini" data-preset="reliefonly">Relief valve only: size it</button>
+          <button class="mini" data-preset="lockup">Night lock-up, token relief</button>
+          <button class="mini" data-preset="isolated">Relief left isolated</button>
+          <button class="mini" data-preset="shared">Shared sensing line</button>
+          <button class="mini" data-preset="cold">Cold gas, heater off</button>
+          <button class="mini" data-preset="old">Old spur at 80 % SMYS</button>
+          <button class="mini" data-preset="badsets">Set points in the wrong order</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2>Outlet pressure against time · set points, MAOP and the allowed overpressure</h2><span class="legend"><i class="sw water"></i>outlet <i class="sw good"></i>worker / monitor set <i class="sw brass"></i>relief / slam-shut <i class="sw taps"></i>MAOP and limit</span></div>
+      <canvas id="chart" width="900" height="270" aria-label="Outlet pressure trend"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Flow against time · customer demand, station flow and relief</h2><span class="legend"><i class="sw steel"></i>demand <i class="sw water"></i>through the regulators <i class="sw taps"></i>relief vent</span></div>
+      <canvas id="schart" width="900" height="210" aria-label="Flow trend"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Relief sizing · flow a failed-open regulator passes against what the relief can vent</h2><span class="legend"><i class="sw taps"></i>failure flow less minimum demand <i class="sw water"></i>relief capacity <i class="sw brass"></i>allowed limit</span></div>
+      <canvas id="trace" width="900" height="210" aria-label="Relief sizing"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-log">
+    <div class="log-tools"><span>Each reading stores the system, MAOP, the allowed limit, set points, what protection is installed, the relief capacity and isolation, sensing lines, the highest outlet pressure, the last failure and its outcome, gas vented and the checks passed.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="pressure-station.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Tag</th><th>System</th><th>MAOP</th><th>Limit</th><th>Worker</th><th>Monitor</th><th>Relief</th><th>SSV</th><th>Relief cap</th><th>RV iso</th><th>Sensing</th><th>Highest</th><th>Failure</th><th>Outcome</th><th>Vented Sm³</th><th>T out °C</th><th>v m/s</th><th>Checks</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>Protection is required (845.1, 845.212, 845.222)</h3><p>Any pipeline or system fed from a source that could exceed its MAOP if pressure control failed needs pressure-relieving or pressure-limiting devices. For pipelines: spring-loaded relief valves, pilot-loaded back-pressure regulators that open if the pilot fails, rupture discs. For high-pressure distribution also: a monitoring regulator in series with the primary regulator, a series regulator, or an automatic shut-off set at or below MAOP that stays shut until reset by hand.</p></article>
+      <article><h3>How far above MAOP (845.411)</h3><p class="eq">hoop over 72 % SMYS: MAOP + 4 % &nbsp;·&nbsp; at or below 72 %: lesser of MAOP + 10 % and the pressure at 75 % SMYS</p><p>The protective devices must have the capacity and settings to keep the system under this limit. Where a second regulator works in series with the first, checks must show that the pressure stays at or below MAOP if any one regulator fails wide open (845.421).</p></article>
+      <article><h3>Station design (841.126)</h3><p>Overpressure protection by a monitor regulator in series with each controlling regulator, adequately sized relief valves downstream, or overpressure shut-off valves. Separate isolation for each regulator's supply, control and sensing lines. Prevent freezing of regulators and pilots. Avoid sound levels of 110 dBA and above. Keep gas velocity below 100 ft/s (30 m/s) at peak.</p></article>
+      <article><h3>Isolation and single incidents (845.34–845.36)</h3><p>Lock the stop valve under a relief valve open, or fit duplicate relief valves so only one can be isolated at a time. Design so that a single incident cannot disable both the regulator and its protection: control and sensing lines must be protected, and damage to one line must not disable both.</p></article>
+      <article><h3>The model</h3><p class="eq">Q = K · y · P<sub>1</sub> · √(1 − (P<sub>2</sub>/P<sub>1</sub>)²), choked below P<sub>2</sub>/P<sub>1</sub> = 0.53 &nbsp;·&nbsp; dP<sub>2</sub>/dt = (Q<sub>in</sub> − Q<sub>demand</sub> − Q<sub>relief</sub>) · p<sub>std</sub> / V<sub>pack</sub></p><p>Monitor and worker are in series; the pressure between them is solved so both pass the same flow. Each regulator integrates the error between its set point and the pressure on its sensing line. Relief lifts from its set point to full capacity at 10 % accumulation. Joule–Thomson cooling ≈ 0.5 °C per bar of let-down.</p></article>
+      <article><h3>About the numbers</h3><p>[Illustrative data, for training only.] Clauses follow ASME B31.8-2003. Regulator sizes, gains, the demand profile, line-pack volumes, seat leakage, relief characteristics and the freezing rule are invented. Real stations are sized from the manufacturers' capacity data.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the station</h2>
+    <ul>
+      <li><b>Normal day</b>: the worker regulator holds the outlet at its set point while customer demand rises and falls. The monitor sits wide open, waiting.</li>
+      <li><b>Set points</b>: worker below monitor, monitor at or below MAOP, relief and slam-shut above them but within the allowed overpressure. The checks under the readouts mark each rule.</li>
+      <li><b>Inject a failure</b> and watch which device catches it. Repair and reset the slam-shut by hand. Reset the highest reading before each new test.</li>
+      <li><b>Design</b>: remove the monitor and slam-shut and size a relief valve alone; try the old spur at 80 % SMYS; leave the relief isolated; share the sensing line; let the gas go cold.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>Space</kbd> run / pause · <kbd>I</kbd> inject · <kbd>X</kbd> repair · <kbd>R</kbd> record · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>
