@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pipeline Corrosion and Integrity Assessor</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+<header class="bar">
+  <div class="title">
+    <span class="eyebrow">Mechanical engineering training · Simulator 30</span>
+    <h1>Pipeline Corrosion and Integrity Assessor</h1>
+  </div>
+  <div class="status" id="status" aria-live="polite">
+    <span class="pill" id="pillYear">Year 15 in service</span>
+    <span class="pill" id="pillCP">—</span>
+    <span class="pill amber hidden" id="pillOver">Overprotection below −1.20 V off</span>
+    <span class="pill amber hidden" id="pillStray">Stray current discharge</span>
+    <span class="pill warn hidden" id="pillFail">FAILURE IN SERVICE</span>
+    <span class="pill warn hidden" id="pillOpen">Anomalies above MAOP not dealt with</span>
+  </div>
+  <div class="tools">
+    <button class="tbtn" id="btnTheme" title="Light / dark">Theme</button>
+    <button class="tbtn" id="btnHelp" title="What am I looking at?">Guide</button>
+  </div>
+</header>
+
+<main class="bench">
+  <section class="rig" aria-label="Cathodic protection survey and in-line inspection features">
+    <div class="rig-head">
+      <h2>20 km line · CP survey along the route · in-line inspection features below · click a test post or a feature</h2>
+      <span class="legend"><i class="sw water"></i>on potential <i class="sw good"></i>instant-off <i class="sw taps"></i>−0.85 V criterion <i class="sw brass"></i>coating / soil <i class="sw steel"></i>feature depth</span>
+    </div>
+    <div class="rig-svg" id="rig"></div>
+
+    <div class="readouts">
+      <div class="ro" id="roPostBox"><span class="k">Test post</span><span class="v small" id="roPost">—</span><span class="u" id="roPostNote">click the potential plot</span></div>
+      <div class="ro" id="roCoverBox"><span class="k">Route meeting a CP criterion</span><span class="v" id="roCover">—</span><span class="u" id="roCoverNote">—</span></div>
+      <div class="ro"><span class="k">Transformer-rectifier</span><span class="v" id="roTR">—</span><span class="u" id="roTRNote">—</span></div>
+      <div class="ro" id="roFeatBox"><span class="k">Selected feature (Appendix L)</span><span class="v small" id="roFeat">—</span><span class="u" id="roFeatNote">click a feature bar or a row in the list</span></div>
+      <div class="ro" id="roSumBox"><span class="k">Features</span><span class="v small" id="roSum">—</span><span class="u" id="roSumNote">—</span></div>
+      <div class="ro"><span class="k">Remaining life</span><span class="v" id="roLife">—</span><span class="u" id="roLifeNote">—</span></div>
+      <div class="ro" id="roMaopBox"><span class="k">MAOP</span><span class="v" id="roMaop">—</span><span class="u" id="roMaopNote">—</span></div>
+      <div class="ro" id="roFailBox"><span class="k">Service record</span><span class="v small" id="roFail">No failures</span><span class="u" id="roFailNote">—</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="grp-title">Pipe</div>
+      <div class="ctl"><label>Outside diameter <select id="OD"><option value="323.9">DN 300 · 323.9 mm</option><option value="406.4" selected>DN 400 · 406.4 mm</option><option value="610">DN 600 · 610.0 mm</option></select></label></div>
+      <div class="ctl"><label>Nominal wall <select id="wt"><option>5.6</option><option>6.4</option><option selected>7.1</option><option>7.9</option><option>8.7</option><option>9.5</option><option>11.1</option></select></label></div>
+      <div class="ctl"><label>Grade (SMYS) <select id="grade"><option value="245">Gr B · 245 MPa (35 ksi)</option><option value="290">X42 · 290 MPa</option><option value="359" selected>X52 · 359 MPa</option><option value="414">X60 · 414 MPa</option></select></label></div>
+      <div class="ctl"><label>Location class (design factor) <select id="cls"><option value="0.72" selected>Class 1 Div 2 · F 0.72</option><option value="0.60">Class 2 · F 0.60</option><option value="0.50">Class 3 · F 0.50</option></select></label></div>
+      <div class="ctl"><label for="MAOP">MAOP <output id="MAOPOut">70 bar</output></label><input type="range" id="MAOP" min="20" max="100" value="70" step="0.5"></div>
+      <div class="ctl"><label>Assessment <select id="method"><option value="L" selected>Appendix L (original B31G)</option><option value="mod">Modified B31G (comparison)</option></select></label></div>
+      <div class="ctl"><label class="chk"><input type="checkbox" id="tol"> Add tool tolerance: +10 % of wall to every depth</label></div>
+
+      <div class="grp-title">Cathodic protection and coating</div>
+      <div class="ctl"><label for="I">Rectifier current <output id="IOut">4.0 A</output></label><input type="range" id="I" min="0" max="12" value="4" step="0.1"></div>
+      <div class="ctl"><label>Coating <select id="coat"><option value="fbe">Fusion-bonded epoxy, good</option><option value="ct" selected>Coal tar enamel, aged</option><option value="tape">Tape wrap, disbonding</option></select></label></div>
+      <div class="ctl"><label class="chk"><input type="checkbox" id="bond"> Drainage bond to the DC railway at 15 km</label></div>
+      <div class="ctl"><label class="chk"><input type="checkbox" id="recoat"> Recoat the wetland stretch 4–6 km</label></div>
+
+      <div class="grp-title">Act on the selected feature, or the line</div>
+      <div class="ctl-actions">
+        <button class="act ghost" data-act="accept">Accept, monitor</button>
+        <button class="act ghost" data-act="sleeve">Full encirclement sleeve</button>
+        <button class="act ghost" data-act="cutout">Cut out and replace</button>
+        <button class="act ghost" data-act="patch">Plate patch</button>
+        <button class="act ghost" data-act="weld">Weld deposit</button>
+        <button class="act ghost" id="btnDerate">Reduce MAOP to the lowest P′</button>
+        <button class="act" id="btnYears">+5 years</button>
+        <button class="act ghost" id="btnRecord">Record reading</button>
+      </div>
+      <div class="ctl-foot">
+        <span>Scenarios</span>
+        <span class="btns">
+          <button class="mini" data-preset="base">Year 15: first in-line inspection</button>
+          <button class="mini" data-preset="lowcp">CP current too low</button>
+          <button class="mini" data-preset="rocky">High-resistivity ground: the IR-drop trap</button>
+          <button class="mini" data-preset="over">Too much current</button>
+          <button class="mini" data-preset="stray">DC railway interference</button>
+          <button class="mini" data-preset="neglect">Ten years of doing nothing</button>
+          <button class="mini" data-preset="grb">Old Grade B line (patch allowed)</button>
+          <button class="mini" data-preset="fbe">New FBE-coated line</button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel-right">
+    <div class="chart-box">
+      <div class="chart-head"><h2>Depth against length · the acceptance curve where P′ = MAOP</h2><span class="legend"><i class="sw good"></i>acceptable <i class="sw taps"></i>repair or reduce MAOP <i class="sw steel"></i>10 % and 80 % of wall <i class="sw water"></i>curve at MAOP</span></div>
+      <canvas id="chart" width="900" height="290" aria-label="Depth against length"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Selected feature · projected depth and safe pressure against years</h2><span class="legend"><i class="sw steel"></i>depth % wall <i class="sw water"></i>safe pressure P′ <i class="sw taps"></i>MAOP and 80 %</span></div>
+      <canvas id="schart" width="900" height="220" aria-label="Feature projection"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-head"><h2>Corrosion rate at a coating holiday along the route</h2><span class="legend"><i class="sw taps"></i>mm per year now <i class="sw steel"></i>unprotected (free) rate</span></div>
+      <canvas id="trace" width="900" height="190" aria-label="Corrosion rate"></canvas>
+    </div>
+  </section>
+</main>
+
+<section class="drawer">
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-tab="feat" role="tab">Anomaly list</button>
+    <button class="tab" data-tab="log" role="tab">Data log <span class="count" id="logCount">0</span></button>
+    <button class="tab" data-tab="tasks" role="tab">Learning tasks</button>
+    <button class="tab" data-tab="theory" role="tab">Behind the numbers</button>
+  </nav>
+  <div class="tabpanel on" id="tab-feat">
+    <div class="log-tools"><span>In-line inspection metal-loss features. Click a row to select it; choose what to do with each one. Depths include the tool tolerance when it is switched on.</span></div>
+    <div class="tablewrap"><table id="featTable"><thead><tr><th>ID</th><th>km</th><th>Depth % wall</th><th>Length mm</th><th>A</th><th>P′ bar</th><th>Verdict</th><th>Rate mm/y</th><th>Life y</th><th>Action</th><th>Valid</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-log">
+    <div class="log-tools"><span>Each reading stores the year, pipe, MAOP, CP current, coating, bond, the route meeting a criterion, the worst off potential, feature counts, lowest P′, remaining life, re-inspection interval, actions taken and failures.</span><span class="btns"><button class="mini" id="btnCopy">Copy as CSV</button><a class="mini" id="btnDownload" download="pipeline-integrity.csv" href="#">Download CSV</a><button class="mini" id="btnClear">Clear</button></span></div>
+    <div class="tablewrap"><table id="logTable"><thead><tr><th>#</th><th>Tag</th><th>Year</th><th>Grade</th><th>MAOP</th><th>Method</th><th>Tol</th><th>I A</th><th>Coating</th><th>Bond</th><th>CP % route</th><th>Worst off V</th><th>Most neg off V</th><th>Must act</th><th>Open</th><th>Lowest P′</th><th>Life y</th><th>Re-inspect y</th><th>Repairs</th><th>Wrong</th><th>Failures</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="tabpanel" id="tab-tasks"><ol class="tasks" id="tasks"></ol></div>
+  <div class="tabpanel" id="tab-theory">
+    <div class="theory">
+      <article><h3>Remaining strength of corroded pipe (862.213, Appendix L)</h3><p class="eq">A = 0.893 L / √(D t) &nbsp;·&nbsp; A ≤ 4: P′ = 1.1 P (1 − ⅔ d/t) / (1 − ⅔ (d/t) / √(A² + 1)) &nbsp;·&nbsp; A &gt; 4: P′ = 1.1 P (1 − d/t) &nbsp;·&nbsp; P′ ≤ P</p><p>For lines at 40 % SMYS or more. P is the greater of the design pressure (without E) and the established MAOP. Depth under 10 % of wall: no reduction. Over 80 %: consider taking the segment out of service. If the MAOP is above P′, reduce the MAOP or repair (851.4) or replace.</p></article>
+      <article><h3>Why the curve jumps at A = 4</h3><p>Original B31G treats a short feature as a parabola (⅔ of the depth times the length) and a long one as a rectangle of full depth. The two formulas do not meet at A = 4, so the acceptance curve steps down there. This is a known feature of the method and one reason the modified method was developed.</p></article><article><h3>Modified B31G (comparison only)</h3><p class="eq">z = L²/(D t) · M = √(1 + 0.6275 z − 0.003375 z²) (z ≤ 50), else 0.032 z + 3.3 · S<sub>f</sub> = (SMYS + 69 MPa)(1 − 0.85 d/t)/(1 − 0.85 (d/t)/M) · P′ = F · 2 S<sub>f</sub> t / D</p><p>Not in B31.8-2003. Shown so you can see why the later method is less conservative. [Check against ASME B31G in force before use.]</p></article>
+      <article><h3>Cathodic protection criteria (862.214, Appendix K = NACE RP0169 §6)</h3><p class="eq">−0.85 V to Cu/CuSO₄ with current applied (IR drop considered) · or 300 mV shift with current applied · or 100 mV polarisation from the instant-off reading</p><p>A potential measured with the current on includes the IR drop through the soil. In high-resistivity ground the on reading can look protected while the pipe itself is not polarised (6.2.4). Interrupt the rectifier and read the instant-off potential. Very negative off potentials (more negative than about −1.2 V) risk coating disbondment and hydrogen damage [industry practice, not in B31.8].</p></article>
+      <article><h3>How far the current reaches</h3><p class="eq">α = √(r G) · r = ρ<sub>steel</sub> / (π (D − t) t) · G = g · π D</p><p>The pipe is a leaky conductor: current flows along the steel and leaks off through the coating. Good coating (low conductance g) lets one rectifier protect tens of kilometres; poor coating soaks up current close to the drain point. The model solves this as a resistor ladder every 100 m with insulating flanges at both ends.</p></article>
+      <article><h3>Repairs (851.44)</h3><p>(a) Take out of service and cut out a cylinder of pipe. (b) Full encirclement welded split sleeve. (c) Bolt-on leak clamp for a corrosion-pit leak. (e) Steel plate patch only on pipe of 40 000 psi (276 MPa) SMYS or less, no more than half the circumference. (f) Weld deposit on small corroded areas only where the remaining wall is above the burn-through table and the pipe is not brittle. Every repair is tested and inspected (851.5).</p></article>
+      <article><h3>Interference (862.215)</h3><p>Current picked up from a DC railway leaves the pipe where it crosses back toward the rail substation, and corrodes the pipe at that point. Find it from the potentials and mitigate it, here with a drainage bond.</p></article>
+      <article><h3>Remaining life and re-inspection</h3><p>Each feature grows at the corrosion rate where it sits. Its life ends when P′ falls to the MAOP or the depth reaches 80 %. The model sets the next inspection at half the shortest remaining life, at most 10 years. [Illustrative rule: operators set intervals by their integrity plan, ASME B31.8S.]</p></article>
+      <article><h3>About the numbers</h3><p>[Illustrative data, for training only.] Clauses follow ASME B31.8-2003. Soil, coating conductances, corrosion rates, IR fractions, the railway and every feature are invented. Free corrosion rate ≈ 0.6/(1 + ρ/15) mm/y at a holiday; polarisation reduces it by e per 35 mV.</p></article>
+    </div>
+  </div>
+</section>
+
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use the assessor</h2>
+    <ul>
+      <li><b>CP survey</b>: the plot shows the on and instant-off potentials along 20 km. Click it to read a test post. Raise the rectifier current until the whole route meets a criterion, without going below −1.2 V off.</li>
+      <li><b>Features</b>: the bars under the plot are corrosion features from an in-line inspection, height = depth. Click one, or use the Anomaly list. The readout shows A, the safe pressure P′ and the verdict.</li>
+      <li><b>Decide</b>: accept and monitor, sleeve, cut out, patch or weld deposit, or reduce the MAOP. The list says whether your choice is valid.</li>
+      <li><b>Time</b>: +5 years grows every unrepaired feature at its local corrosion rate. Weak CP, poor coating or the railway will turn features into failures.</li>
+    </ul>
+    <p class="keys">Keys: <kbd>Y</kbd> +5 years · <kbd>R</kbd> record · <kbd>[</kbd>/<kbd>]</kbd> previous / next feature · <kbd>Esc</kbd> close</p>
+    <button class="act" id="btnHelpClose">Close</button>
+  </div>
+</div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

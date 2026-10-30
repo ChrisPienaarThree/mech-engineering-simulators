@@ -1497,6 +1497,61 @@
       ],
       "api": "window.PipelineHydrotest",
       "user_numbering": "Simulator 29 (agreed 30 Oct 2026)"
+    },
+    {
+      "id": "pipeline-integrity",
+      "title": "Pipeline Corrosion and Integrity Assessor",
+      "path": "pipeline-integrity/index.html",
+      "topic": "Gas pipeline integrity · cathodic protection survey (on and instant-off, IR drop) · Appendix K / NACE RP0169 criteria · coating and soil · stray current · in-line inspection features · ASME B31.8 Appendix L (original B31G) and modified B31G · repairs per 851.44 · MAOP reduction · remaining life",
+      "summary": "A 20 km gas line at year 15. CP solved as a leaky resistor ladder (rectifier, coating conductance, soil, insulating flanges) with a DC-railway stray-current discharge: on and instant-off potentials against −0.85 V and 100 mV polarisation, the IR-drop trap in high-resistivity ground, overprotection below −1.2 V. Twenty-two in-line inspection features assessed with Appendix L (A = 0.893 L/√(Dt), short and long formulas, 10 % and 80 % limits) with modified B31G and tool tolerance as comparisons; choose accept, sleeve, cut out, patch (≤ 35 ksi) or weld deposit (burn-through table), or reduce the MAOP; run time forward and watch unprotected features fail; remaining life and re-inspection interval. Clauses follow ASME B31.8-2003.",
+      "inputs": [
+        "OD",
+        "wt",
+        "grade",
+        "cls",
+        "MAOP",
+        "method",
+        "tol",
+        "I",
+        "coat",
+        "bond",
+        "recoat",
+        "post",
+        "select",
+        "actions",
+        "derate",
+        "years",
+        "record",
+        "preset"
+      ],
+      "outputs": [
+        "cover",
+        "worstOff",
+        "mostNeg",
+        "stray",
+        "Pdes",
+        "features",
+        "mustAct",
+        "open",
+        "wrong",
+        "repairs",
+        "lowestPprime",
+        "life",
+        "reinspect",
+        "failures"
+      ],
+      "failure_modes": [
+        "CP current too low: route unprotected",
+        "on potential passes but the pipe is not polarised (IR drop)",
+        "overprotection below −1.2 V off",
+        "stray current discharge at a DC railway crossing",
+        "feature with P′ below MAOP left in service",
+        "feature deeper than 80 % of wall",
+        "invalid repair choice (patch on high-strength pipe, weld deposit on thin remaining wall)",
+        "rupture or leak after years of unchecked growth"
+      ],
+      "api": "window.PipelineIntegrity",
+      "user_numbering": "Simulator 30 (agreed 30 Oct 2026)"
     }
   ]
 }
