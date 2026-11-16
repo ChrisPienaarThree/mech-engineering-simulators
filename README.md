@@ -4,6 +4,9 @@ Standalone, offline simulators for classroom and self-study use. Every simulator
 `simulators/`, opens by double-clicking `index.html` (no server, no internet needed), works on a projector in
 light or dark theme, and shows failure modes as well as normal operation.
 
+**Offline / USB stick:** download the [USB kit (zip)](https://github.com/ChrisPienaarThree/mech-engineering-simulators/releases/latest/download/Mech-Engineering-Simulators.zip),
+unzip it and open `START HERE.html` (Launch Centre, all simulators, guides; no internet needed).
+
 `simulators/manifest.json` lists every simulator with its inputs, outputs and JavaScript API so a dashboard can
 later embed several of them (iframe + `postMessage`) and read or drive them from one screen.
 
