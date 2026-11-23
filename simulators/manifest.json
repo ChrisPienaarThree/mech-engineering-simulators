@@ -1619,6 +1619,47 @@
       ],
       "api": "window.PressureStation",
       "user_numbering": "Simulator 31 (agreed 30 Oct 2026)"
+    },
+    {
+      "id": "dosing-pump",
+      "title": "Dosing Pump Simulator",
+      "path": "dosing-pump/index.html",
+      "topic": "Chemical dosing · dose calculation · drawdown calibration · damper, BPV and PRV · siphoning · fault finding",
+      "summary": "A live chemical dosing skid with day tank, calibration column, strainer, metering pump and gearbox, gauge, PRV, damper, back-pressure valve and injection quill. Work out the pump rate, set stroke and speed, prove the dose by drawdown, compare manual and flow-paced control, then find hidden faults from the readings and field checks.",
+      "inputs": [
+        "sys",
+        "mode",
+        "stroke",
+        "speed",
+        "flowF",
+        "bpv",
+        "running",
+        "preset",
+        "advance"
+      ],
+      "outputs": [
+        "status",
+        "pumpLh",
+        "dischBar",
+        "doseOut",
+        "tankL",
+        "colmL",
+        "gearboxC",
+        "prvLift"
+      ],
+      "failure_modes": [
+        "gas lock",
+        "leaking check valve",
+        "siphoning",
+        "flat damper",
+        "blocked quill",
+        "weak product",
+        "blocked strainer",
+        "diaphragm rupture",
+        "low gearbox oil"
+      ],
+      "api": "window.DosingPump",
+      "user_numbering": "Simulator 32"
     }
   ]
 }

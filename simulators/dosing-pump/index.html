@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dosing Pump Simulator</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <div style="flex:1 1 220px;min-width:0"><span class="eyebrow">Mechanical engineering training · Simulator 32</span><h1>Dosing Pump Simulator</h1><small>All rig data illustrative</small></div>
+  <span class="ed" id="edition"></span>
+  <button id="btnHelp" data-tip="How to use this simulator">Guide</button>
+  <button id="themeBtn" data-tip="Switch light / dark display">Theme</button>
+</header>
+<main>
+<div style="display:grid;gap:12px;align-content:start;min-width:0">
+  <section class="card">
+    <div class="grid3">
+      <div><label for="sys" data-tip="Choose the dosing duty. Each system has its own chemical, stream flow, injection pressure and pump size.">System</label>
+        <select id="sys"></select></div>
+      <div><label data-tip="Product in the day tank, as stated on the label">Chemical</label><div class="ro" id="chem" style="font-size:13px"></div></div>
+      <div><label data-tip="Stream being treated">Stream flow</label><div class="ro"><b id="flowRo"></b><span>m³/h</span></div></div>
+    </div>
+  </section>
+  <section class="card">
+    <svg id="skid" viewBox="0 0 980 300" role="img" aria-label="Dosing skid with live state"></svg>
+  </section>
+  <section class="card">
+    <div class="grid3">
+      <div class="ro" data-tip="Delivered flow from the pump into the line (true value; on site you prove it by drawdown)"><span>Pump delivery (true)</span><b id="qRo">0</b><span>L/h</span></div>
+      <div class="ro" data-tip="Discharge pressure gauge. The band shows the pulsation swing."><span>Discharge pressure</span><b id="pRo">0</b><span id="pBand">bar(g)</span></div>
+      <div class="ro" data-tip="Analyser reading downstream of the dosing point. It lags the real dose (dead time)."><span>Analyser dose</span><b id="doseRo">0</b><span id="doseUnit">mg/L</span></div>
+      <div class="ro" data-tip="Day tank level"><span>Day tank</span><b id="tankRo">0</b><span>L</span></div>
+      <div class="ro" data-tip="Calibration column contents"><span>Calibration column</span><b id="colRo">0</b><span id="colCap">mL</span></div>
+      <div class="ro" data-tip="Gearbox temperature from the round. A rising trend means trouble."><span>Gearbox</span><b id="gbRo">25</b><span>°C</span></div>
+      <div class="ro" data-tip="Field observations an operator can make on the skid"><span>Observations</span><div id="obs" style="font-size:12px"></div></div>
+    </div>
+    <div id="alarms" style="margin-top:6px"></div>
+    <canvas id="trend" width="900" height="160" aria-label="Trend of analyser dose and discharge pressure over the last 3 minutes"></canvas>
+    <small>Trend, last 3 min: <span style="color:var(--chem)">analyser dose</span> · <span style="color:var(--warn)">discharge pressure</span> · dashed = target</small>
+  </section>
+</div>
+
+<div style="display:grid;gap:12px;align-content:start;min-width:0">
+  <section class="card">
+    <h2>Pump</h2>
+    <div class="btns" style="margin-bottom:8px">
+      <button class="pri" id="startBtn" data-tip="Start or stop the dosing pump motor">Start</button>
+      <select id="mode" style="width:auto" data-tip="Manual: fixed speed. Flow-paced: speed follows the stream flow (4 to 20 mA).">
+        <option value="manual">Manual</option><option value="paced">Flow-paced</option></select>
+    </div>
+    <label for="stroke" data-tip="Stroke length setting, 0 to 100 %. Flow starts above the offset S₀.">Stroke <b id="strokeV"></b> %</label>
+    <input type="range" id="stroke" min="0" max="100" step="1">
+    <label for="speed" data-tip="Motor speed (strokes per minute) as % of maximum. In flow-paced mode this follows the stream flow.">Speed <b id="speedV"></b> %</label>
+    <input type="range" id="speed" min="0" max="100" step="1">
+    <label for="flowF" data-tip="Change the stream flow to see the difference between manual and flow-paced control">Stream flow <b id="flowV"></b> % of design</label>
+    <input type="range" id="flowF" min="50" max="150" step="5" value="100">
+    <div class="grid2">
+      <div><label for="bpv" data-tip="Back-pressure valve setting. Holds the discharge above suction pressure and stops siphoning.">BPV setting (bar g)</label><input type="number" id="bpv" min="0" max="40" step="0.5"></div>
+      <div><label data-tip="PRV set pressure (fixed for each system)">PRV set (bar g)</label><div class="ro" id="prvRo"></div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Calibration column (drawdown)</h2>
+    <div class="btns">
+      <button id="fillBtn" data-tip="Open the tank and column valves to fill the column from the tank">1 Fill column</button>
+      <button id="drawBtn" data-tip="Close the tank valve: the pump now draws only from the column">2 Close tank valve</button>
+      <button id="timerBtn" data-tip="Start / stop the stopwatch. Note the column reading at start and stop.">Stopwatch</button>
+      <button id="restoreBtn" data-tip="Open the tank valve and close the column valve: back to normal">3 Restore</button>
+    </div>
+    <p style="margin:6px 0"><span id="valveState"></span> · Stopwatch <b id="timerRo">0.0</b> s · <span id="timerMarks"></span></p>
+    <small>Rate (L/h) = volume (mL) / time (s) × 3.6. Read the column at start and stop; test at least 60 s.</small>
+  </section>
+
+  <section class="card">
+    <h2>Field actions</h2>
+    <div class="btns" id="actions"></div>
+    <div style="margin-top:8px"><label for="diag" data-tip="When you have found the fault, record your diagnosis">Diagnosis</label>
+      <div class="btns"><select id="diag" style="flex:1 1 160px"></select><button id="diagBtn">Submit</button></div></div>
+    <div class="log" id="log" style="margin-top:8px" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="calc">Dose calculator</button>
+      <button role="tab" aria-selected="false" data-tab="scen">Scenario</button>
+      <button role="tab" aria-selected="false" data-tab="fac" id="facTab">Facilitator</button>
+    </div>
+    <div data-panel="calc">
+      <div class="grid2">
+        <div><label for="cDose" data-tip="Target dose in mg/L (or ppm v/v for the process system)">Dose</label><input type="number" id="cDose" step="any"></div>
+        <div><label for="cFlow">Stream flow (m³/h)</label><input type="number" id="cFlow" step="any"></div>
+        <div><label for="cS" data-tip="Product strength in g/L. % w/v × 10, or % w/w × 10 × density.">Strength S (g/L)</label><input type="number" id="cS" step="any"></div>
+        <div class="ro"><span>Pump rate</span><b id="cOut">–</b><span>L/h</span></div>
+      </div>
+      <small id="cNote"></small>
+    </div>
+    <div data-panel="scen" class="hide">
+      <label for="code" data-tip="Enter the code from a scenario card">Scenario code</label>
+      <div class="btns"><input type="text" id="code" style="flex:1 1 120px" autocomplete="off"><button id="codeBtn">Load</button></div>
+      <p id="scenText" style="font-size:13px"></p>
+    </div>
+    <div data-panel="fac" class="hide" id="facPanel"></div>
+  </section>
+</div>
+</main>
+<div class="help hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle">How to use this simulator</h2>
+    <ul>
+      <li><b>Choose a system</b>: each has its own chemical, stream flow, injection pressure and pump size.</li>
+      <li><b>Work out the dose</b>: the dose calculator gives the pump rate from dose, stream flow and product strength.</li>
+      <li><b>Set and start</b>: set stroke and speed, then start the pump.</li>
+      <li><b>Prove it by drawdown</b>: fill the column, close the tank valve, time at least 60 s and read the column at start and stop. Rate (L/h) = mL ÷ s × 3.6. Restore before the column empties.</li>
+      <li><b>Find faults</b>: load a scenario code or a Mystery fault. Confirm the symptom, walk the skid in flow order, change one thing, then submit your diagnosis.</li>
+      <li><b>Safety</b>: on a real pump, isolate, depressurise and decontaminate before opening it, and follow the OEM manual and site procedure.</li>
+    </ul>
+    <button id="btnHelpClose">Close</button>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

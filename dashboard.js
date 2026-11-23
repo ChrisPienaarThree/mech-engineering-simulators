@@ -4,8 +4,15 @@
 'use strict';
 const $ = s => document.querySelector(s);
 const SIMS = (window.SIM_MANIFEST && window.SIM_MANIFEST.simulators) || [];
-const LABEL = { Q: ['Flow', 'm³/h', 1], H: ['Head', 'm', 1], eta: ['Efficiency', '', 2], Pelec: ['Electrical power', 'W', 0], P1: ['Suction P', 'Pa', 0], P2: ['Discharge P', 'Pa', 0], margin: ['NPSH margin', 'm', 2], rpm: ['Speed', 'rpm', 0], dpTaps: ['ΔP element', 'Pa', 0], dpPerm: ['Total loss', 'Pa', 0], K: ['K', '', 2], Qmeter: ['Meter Q', 'm³/h', 2], err: ['Meter error', '%', 1], npsha: ['NPSHa', 'm', 2], npshr: ['NPSHr', 'm', 2], drop: ['Head drop', '%', 1], vib: ['Vibration', 'mm/s', 1], Tb: ['Bearing temp', '°C', 1], Tf: ['Fluid temp', '°C', 1], dB: ['Sound', 'dB', 0], overall: ['Overall', 'mm/s', 2], zone: ['ISO zone', '', null], peakG: ['Peak', 'g', 2], crest: ['Crest factor', '', 1], P: ['Pressure', 'bar', 2], Ppeak: ['Peak', 'bar', 2], Qrel: ['Relief flow', 'L/min', 2], ripple: ['Ripple', '', 2], torque: ['Torque', '', 2], centP: ['Centrifugal P', 'bar', 2], centQ: ['Centrifugal Q', 'L/min', 1], stage: ['Stage', '', null] };
+const LABEL = { status: ['Pump', '', null], pumpLh: ['Pump delivery', 'L/h', 2], dischBar: ['Discharge pressure', 'bar(g)', 1], doseOut: ['Analyser dose', '', 2], tankL: ['Day tank', 'L', 0], colmL: ['Calibration column', 'mL', 0], gearboxC: ['Gearbox', '°C', 0], prvLift: ['PRV', '', null], Q: ['Flow', 'm³/h', 1], H: ['Head', 'm', 1], eta: ['Efficiency', '', 2], Pelec: ['Electrical power', 'W', 0], P1: ['Suction P', 'Pa', 0], P2: ['Discharge P', 'Pa', 0], margin: ['NPSH margin', 'm', 2], rpm: ['Speed', 'rpm', 0], dpTaps: ['ΔP element', 'Pa', 0], dpPerm: ['Total loss', 'Pa', 0], K: ['K', '', 2], Qmeter: ['Meter Q', 'm³/h', 2], err: ['Meter error', '%', 1], npsha: ['NPSHa', 'm', 2], npshr: ['NPSHr', 'm', 2], drop: ['Head drop', '%', 1], vib: ['Vibration', 'mm/s', 1], Tb: ['Bearing temp', '°C', 1], Tf: ['Fluid temp', '°C', 1], dB: ['Sound', 'dB', 0], overall: ['Overall', 'mm/s', 2], zone: ['ISO zone', '', null], peakG: ['Peak', 'g', 2], crest: ['Crest factor', '', 1], P: ['Pressure', 'bar', 2], Ppeak: ['Peak', 'bar', 2], Qrel: ['Relief flow', 'L/min', 2], ripple: ['Ripple', '', 2], torque: ['Torque', '', 2], centP: ['Centrifugal P', 'bar', 2], centQ: ['Centrifugal Q', 'L/min', 1], stage: ['Stage', '', null] };
 const PRESETS = {
+  'dosing-pump': [
+    ['Ferric chloride', 'Wastewater: set and prove', { preset: 'eff' }],
+    ['Hydrochloric acid', 'Desalination at 6 bar', { preset: 'hcl' }],
+    ['Caustic soda', 'Wastewater pH', { preset: 'caustic' }],
+    ['Hypochlorite', 'Cooling water', { preset: 'cw' }],
+    ['Mystery fault', 'Find it from the readings', { preset: 'mystery' }],
+  ],
   'hydraulic-loop': [
     ['Normal duty', 'Speed 100 %, valve 50 %, DN40', { speed: 100, valve: 50, pipe: 40, length: 8, temp: 20, strainer: 0, level: 0.8 }],
     ['Throttled', 'Same speed, valve 20 % — operating point climbs the curve', { speed: 100, valve: 20 }],
@@ -298,6 +305,7 @@ const PRESETS = {
   ],
 };
 const TASK_NAMES = {
+  'dosing-pump': { prove: 'Prove a dose', siphon: 'See a siphon', paced: 'Flow-paced dosing', fault: 'Find and clear a fault' },
   'hydraulic-loop': { start: 'Start the loop', bep: 'Find the BEP', throttle: 'Same flow, two ways', pipe: 'Swap the test section', cav: 'Make it cavitate', dead: 'Dead-head the pump', runout: 'Run off the end of the curve' },
   'restriction-board': { bern: 'Bernoulli at the throat', recov: 'Pressure recovery', fric: 'Friction ∝ Q²', minor: 'Minor losses add up', cal: 'Calibrate the orifice', sys: 'Trace an element curve', cav: 'Cavitate the throat' },
   'pump-trainer': { hq: 'H–Q curve', eta: 'Efficiency curve and BEP', sys: 'System curve', aff: 'Affinity-law curves', par: 'Parallel curve', ser: 'Series curve', op: 'Predict the operating point', mismatch: 'Mismatched pumps in parallel' },
@@ -365,6 +373,7 @@ const PLAN = [
   ['35 min', 'Operating-Point Board', 'Teams on the magnetic board: card 0, then A–D (strainer, tank level, throttle, VFD), E–F for fast teams. Predict on the board, verify on the digital board in projector mode or on the loop bench. Deliverable: the team record sheet with hits and the two comparisons (which change cost the most flow; throttle against VFD power).'],
   ['30 min', 'Compressor Map Simulator', 'Start-up on recycle, then the four routes into surge: header pressure, process demand, suction pressure, speed. Surge sequence with a 15 s valve against the same upset with a 2 s valve; manual recovery; choke. Deliverable: the data log rows at each surge with the valve position and the phase named.'],
   ['10 min', 'Side by side', 'Loop bench next to the cavitation trainer: how a system change upstream becomes a suction problem at the pump.'],
+  ['20 min', 'Dosing Pump Simulator', 'Set a chemical dose, prove it by drawdown, then find a mystery fault. Deliverable: a calibration result within ±3 % and a correct diagnosis.'],
 ];
 
 /* ---------------- progress (per device) ---------------- */
