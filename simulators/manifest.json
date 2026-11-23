@@ -103,7 +103,7 @@
         "fluid heating"
       ],
       "api": "window.PumpTrainer",
-      "user_numbering": "Artifact 3 (assumed)"
+      "user_numbering": "Artifact 3"
     },
     {
       "id": "pd-pump-skid",
@@ -144,7 +144,7 @@
         "suction starvation"
       ],
       "api": "window.PDPumpSkid",
-      "user_numbering": "Artifact 4 (assumed)"
+      "user_numbering": "Artifact 4"
     },
     {
       "id": "cavitation-trainer",
@@ -177,41 +177,6 @@
       ],
       "api": "window.CavitationTrainer",
       "user_numbering": "Artifact 5"
-    },
-    {
-      "id": "vibration-fault-simulator",
-      "title": "Rotating Machinery Fault Simulator",
-      "path": "vibration-fault-simulator/index.html",
-      "topic": "Condition monitoring · vibration analysis · FFT, waveform, phase, envelope · fault diagnosis",
-      "summary": "Motor-driven shaft rig with interchangeable discs, bearings, coupling, belt drive and gearbox. Learners manufacture unbalance, misalignment, looseness, bent shaft, bearing defects, gear and belt defects and resonance, then measure them with accelerometers and a tachometer: overall level with ISO zone, FFT spectrum in orders or hertz, time waveform, 1× phase across the train, and envelope spectrum. The signal is synthesised from the machine state and analysed for real, so the peaks appear only when the machine produces them. Blind-machine mode hides a fault for diagnosis.",
-      "inputs": [
-        "rpm",
-        "point",
-        "dir",
-        "fitBelt",
-        "fitGear",
-        "fitDisc2",
-        "faults"
-      ],
-      "outputs": [
-        "overall",
-        "zone",
-        "peakG",
-        "crest",
-        "rpm"
-      ],
-      "failure_modes": [
-        "unbalance",
-        "angular and parallel misalignment",
-        "looseness",
-        "bent shaft",
-        "bearing outer/inner/ball/cage defects",
-        "gear wear, crack, eccentricity",
-        "belt defects",
-        "resonance"
-      ],
-      "api": "window.VibrationFaultSim",
-      "user_numbering": "Artifact 16"
     },
     {
       "id": "compressor-map",
@@ -254,7 +219,7 @@
         "total recycle (cannot meet header)"
       ],
       "api": "window.CompressorMap",
-      "user_numbering": "Artifact 6 (assumed)"
+      "user_numbering": "Artifact 6"
     },
     {
       "id": "operating-point-board",
@@ -285,7 +250,7 @@
         "over-trimmed impeller"
       ],
       "api": "window.OperatingPointBoard",
-      "user_numbering": "Artifact 7 (assumed)",
+      "user_numbering": "Artifact 7",
       "files": [
         "model.js (shared with the print generator)",
         "print/make-print.js",
@@ -340,7 +305,7 @@
         "pump dead-headed in neutral (closed centre)"
       ],
       "api": "window.HydraulicPowerDemo",
-      "user_numbering": "Artifact 8 (assumed)"
+      "user_numbering": "Artifact 8"
     },
     {
       "id": "derrick-crane",
@@ -398,7 +363,7 @@
         "two-blocking"
       ],
       "api": "window.DerrickCrane",
-      "user_numbering": "Artifact 9 (assumed)"
+      "user_numbering": "Artifact 9"
     },
     {
       "id": "beam-loads",
@@ -443,7 +408,7 @@
         "mechanism (supports coincide)"
       ],
       "api": "window.BeamLoads",
-      "user_numbering": "Artifact 10 (assumed)"
+      "user_numbering": "Artifact 10"
     },
     {
       "id": "mass-spring-damper",
@@ -489,7 +454,7 @@
         "damping worsening isolation above √2"
       ],
       "api": "window.MassSpringDamper",
-      "user_numbering": "Artifact 11 (assumed)"
+      "user_numbering": "Artifact 11"
     },
     {
       "id": "planetary-gears",
@@ -532,7 +497,7 @@
         "carrier stalled by opposing inputs"
       ],
       "api": "window.PlanetaryGears",
-      "user_numbering": "Artifact 12 (assumed)"
+      "user_numbering": "Artifact 12"
     },
     {
       "id": "bearing-lube-rig",
@@ -588,7 +553,7 @@
         "load above C0"
       ],
       "api": "window.BearingRig",
-      "user_numbering": "Artifact 13 (assumed)"
+      "user_numbering": "Artifact 13"
     },
     {
       "id": "heat-exchanger",
@@ -636,7 +601,7 @@
         "temperature cross impossible in parallel flow"
       ],
       "api": "window.HeatExchanger",
-      "user_numbering": "Artifact 14 (assumed)"
+      "user_numbering": "Artifact 14"
     },
     {
       "id": "belt-drive",
@@ -690,7 +655,42 @@
         "over-tension loading the bearings"
       ],
       "api": "window.BeltDrive",
-      "user_numbering": "Artifact 15 (assumed)"
+      "user_numbering": "Artifact 15"
+    },
+    {
+      "id": "vibration-fault-simulator",
+      "title": "Rotating Machinery Fault Simulator",
+      "path": "vibration-fault-simulator/index.html",
+      "topic": "Condition monitoring · vibration analysis · FFT, waveform, phase, envelope · fault diagnosis",
+      "summary": "Motor-driven shaft rig with interchangeable discs, bearings, coupling, belt drive and gearbox. Learners manufacture unbalance, misalignment, looseness, bent shaft, bearing defects, gear and belt defects and resonance, then measure them with accelerometers and a tachometer: overall level with ISO zone, FFT spectrum in orders or hertz, time waveform, 1× phase across the train, and envelope spectrum. The signal is synthesised from the machine state and analysed for real, so the peaks appear only when the machine produces them. Blind-machine mode hides a fault for diagnosis.",
+      "inputs": [
+        "rpm",
+        "point",
+        "dir",
+        "fitBelt",
+        "fitGear",
+        "fitDisc2",
+        "faults"
+      ],
+      "outputs": [
+        "overall",
+        "zone",
+        "peakG",
+        "crest",
+        "rpm"
+      ],
+      "failure_modes": [
+        "unbalance",
+        "angular and parallel misalignment",
+        "looseness",
+        "bent shaft",
+        "bearing outer/inner/ball/cage defects",
+        "gear wear, crack, eccentricity",
+        "belt defects",
+        "resonance"
+      ],
+      "api": "window.VibrationFaultSim",
+      "user_numbering": "Artifact 16"
     },
     {
       "id": "brake-clutch",
@@ -756,7 +756,7 @@
         "engine stall on a dumped clutch"
       ],
       "api": "window.BrakeClutch",
-      "user_numbering": "Artifact 17 (assumed)"
+      "user_numbering": "Artifact 17"
     },
     {
       "id": "fatigue-notch",
@@ -810,7 +810,7 @@
         "crack growth to fracture"
       ],
       "api": "window.FatigueBench",
-      "user_numbering": "Artifact 18 (assumed)"
+      "user_numbering": "Artifact 18"
     },
     {
       "id": "bolted-joint",
@@ -868,7 +868,7 @@
         "bolt fatigue on a soft or gasketed joint"
       ],
       "api": "window.BoltedJoint",
-      "user_numbering": "Artifact 19 (assumed)"
+      "user_numbering": "Artifact 19"
     },
     {
       "id": "turbine-cycles",
@@ -919,7 +919,7 @@
         "steam temperature capped by exhaust in the combined cycle"
       ],
       "api": "window.TurbineCycles",
-      "user_numbering": "Artifact 20 (assumed)"
+      "user_numbering": "Artifact 20"
     },
     {
       "id": "control-valve-pid",
@@ -979,7 +979,7 @@
         "dead time limiting the gain"
       ],
       "api": "window.ControlLoop",
-      "user_numbering": "Artifact 21 (assumed)"
+      "user_numbering": "Artifact 21"
     },
     {
       "id": "refrigeration-cycle",
@@ -1036,7 +1036,7 @@
         "fouled condenser raising the condensing temperature"
       ],
       "api": "window.RefrigerationCycle",
-      "user_numbering": "Artifact 22 (assumed)"
+      "user_numbering": "Artifact 22"
     },
     {
       "id": "rotor-balancing",
@@ -1090,7 +1090,7 @@
         "residual unbalance above grade"
       ],
       "api": "window.RotorRig",
-      "user_numbering": "Artifact 23 (assumed)"
+      "user_numbering": "Artifact 23"
     },
     {
       "id": "shaft-alignment",
@@ -1152,7 +1152,7 @@
         "2× vibration in zone C"
       ],
       "api": "window.ShaftAlignment",
-      "user_numbering": "Artifact 24 (assumed)"
+      "user_numbering": "Artifact 24"
     },
     {
       "id": "gearbox-teeth",
@@ -1211,7 +1211,7 @@
         "oil overheating from churning"
       ],
       "api": "window.GearboxBench",
-      "user_numbering": "Artifact 25 (assumed)"
+      "user_numbering": "Artifact 25"
     },
     {
       "id": "api650-tank",
@@ -1285,7 +1285,7 @@
         "shell overstressed during a fill"
       ],
       "api": "window.TankDesign",
-      "user_numbering": "Artifact 26 (assumed)"
+      "user_numbering": "Artifact 26"
     },
     {
       "id": "api620-tank",
@@ -1373,7 +1373,7 @@
         "shell lifts at test pressure"
       ],
       "api": "window.TankDesign620",
-      "user_numbering": "Artifact 27 (assumed)"
+      "user_numbering": "Artifact 27"
     },
     {
       "id": "gas-pipeline-route",
@@ -1424,7 +1424,7 @@
         "hoop stress above the fracture-control threshold"
       ],
       "api": "window.PipelineRoute",
-      "user_numbering": "Simulator 28 (agreed 30 Oct 2026)"
+      "user_numbering": "Simulator 28"
     },
     {
       "id": "pipeline-hydrotest",
@@ -1496,7 +1496,7 @@
         "hold shorter than 2 h"
       ],
       "api": "window.PipelineHydrotest",
-      "user_numbering": "Simulator 29 (agreed 30 Oct 2026)"
+      "user_numbering": "Simulator 29"
     },
     {
       "id": "pipeline-integrity",
@@ -1551,7 +1551,7 @@
         "rupture or leak after years of unchecked growth"
       ],
       "api": "window.PipelineIntegrity",
-      "user_numbering": "Simulator 30 (agreed 30 Oct 2026)"
+      "user_numbering": "Simulator 30"
     },
     {
       "id": "pipeline-overpressure",
@@ -1618,7 +1618,7 @@
         "outlet velocity over 30 m/s"
       ],
       "api": "window.PressureStation",
-      "user_numbering": "Simulator 31 (agreed 30 Oct 2026)"
+      "user_numbering": "Simulator 31"
     },
     {
       "id": "dosing-pump",
